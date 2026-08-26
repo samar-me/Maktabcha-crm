@@ -172,7 +172,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="oldMasterPass" className="text-xs">
-                    Asosiy parol (@Samar18)
+                    Asosiy parol
                   </Label>
                   <Input
                     id="oldMasterPass"

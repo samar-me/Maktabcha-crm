@@ -217,7 +217,7 @@ export function LoginForm() {
                 type={showMasterPass ? "text" : "password"}
                 value={masterPassword}
                 onChange={(e) => setMasterPassword(e.target.value)}
-                placeholder="Parolni kiriting (masalan: @Samar18)"
+                placeholder="Maxfiy parolni kiriting..."
                 className="pr-10 text-sm h-11"
                 required
                 autoFocus
