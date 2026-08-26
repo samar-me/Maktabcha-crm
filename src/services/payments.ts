@@ -80,18 +80,14 @@ export async function updatePayment(id: string, updates: PaymentUpdate): Promise
   return data as Payment;
 }
 
+import { deletePaymentAction } from "@/actions/payments";
+
 export async function deletePayment(id: string): Promise<boolean> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("payments")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error deleting payment:", error);
-    throw new Error(error.message);
+  const res = await deletePaymentAction(id);
+  if (!res.success) {
+    console.error("Error deleting payment:", res.error);
+    throw new Error(res.error || "To‘lovni o‘chirishda xatolik");
   }
-
   return true;
 }
 

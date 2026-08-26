@@ -40,3 +40,33 @@ export async function updateSettingsAction(
     return { success: false, error: err.message || "Kutilmagan xatolik" };
   }
 }
+
+/**
+ * Clear all demo / test data (Students, Groups, Attendance, Payments, Grades, Lessons, Homework).
+ * Keeps system settings and PIN configuration intact.
+ */
+export async function clearAllDemoDataAction(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+
+    // Delete in cascade order
+    await supabase.from("attendance").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("homework_submissions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("grades").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("payments").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("homework").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("lessons").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("group_students").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("groups").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("students").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error clearing demo data:", err);
+    return { success: false, error: err.message || "Test ma'lumotlarini o‘chirishda xatolik" };
+  }
+}

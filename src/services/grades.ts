@@ -73,18 +73,14 @@ export async function saveGrade(grade: GradeInsert & { id?: string }): Promise<G
   }
 }
 
+import { deleteGradeAction } from "@/actions/grades";
+
 export async function deleteGrade(id: string): Promise<boolean> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("grades")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error deleting grade:", error);
-    throw new Error(error.message);
+  const res = await deleteGradeAction(id);
+  if (!res.success) {
+    console.error("Error deleting grade:", res.error);
+    throw new Error(res.error || "Bahoni o‘chirishda xatolik");
   }
-
   return true;
 }
 

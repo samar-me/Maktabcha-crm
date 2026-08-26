@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Student, Group, Payment, Attendance, Lesson, Grade, HomeworkSubmission } from "@/types/database";
-import { getStudentById, updateStudent } from "@/services/students";
+import { getStudentById, updateStudent, deleteStudent } from "@/services/students";
 import { getGroups, getGroupsByStudentId, addStudentToGroup } from "@/services/groups";
 import { getPaymentsByStudentId } from "@/services/payments";
 import { getAttendance } from "@/services/attendance";
@@ -15,12 +16,14 @@ import { MoneyDisplay } from "@/components/shared/money-display";
 import { StatCard } from "@/components/shared/stat-card";
 import { StudentFormDialog } from "./student-form-dialog";
 import { StudentFormValues } from "./student-schema";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Edit,
+  Trash2,
   Phone,
   MapPin,
   Calendar,
@@ -54,7 +57,26 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  const router = useRouter();
   const [formDialogOpen, setFormDialogOpen] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+
+  const handleDeleteStudent = async () => {
+    if (!student) return;
+    setDeleting(true);
+    try {
+      await deleteStudent(student.id);
+      toast.success(`${student.first_name} tizimdan o‘chirildi`);
+      router.push("/students");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || "O‘chirishda xatolik yuz berdi");
+    } finally {
+      setDeleting(false);
+      setDeleteConfirmOpen(false);
+    }
+  };
 
   const loadStudentData = React.useCallback(async () => {
     try {
@@ -211,6 +233,15 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
               <CreditCard className="w-4 h-4" />
               <span>To‘lov kiritish</span>
             </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs h-9 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+            onClick={() => setDeleteConfirmOpen(true)}
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="hidden sm:inline">O‘chirish</span>
           </Button>
         </div>
       </div>
@@ -611,6 +642,19 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         student={student}
         groups={allGroups}
         onSave={handleSaveStudent}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="O‘quvchini o‘chirishni tasdiqlaysizmi?"
+        description={`"${student?.first_name} ${student?.last_name || ""}" tizimdan butunlay o‘chiriladi. Bu amalni ortga qaytarib bo‘lmaydi.`}
+        confirmText="Ha, o‘chirilsin"
+        cancelText="Bekor qilish"
+        variant="destructive"
+        loading={deleting}
+        onConfirm={handleDeleteStudent}
       />
     </div>
   );

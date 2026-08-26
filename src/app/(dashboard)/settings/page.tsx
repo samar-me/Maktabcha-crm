@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { getSettings, updateSettings } from "@/services/settings";
+import { clearAllDemoDataAction } from "@/actions/settings";
 import {
   getPersonalAuthStatusAction,
   changePinAction,
   resetPinAction,
   verifyMasterPasswordAction,
 } from "@/actions/personal-auth";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import {
   Building2,
   Save,
@@ -25,6 +27,7 @@ import {
   Lock,
   KeyRound,
   RotateCcw,
+  Trash2,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -51,6 +54,27 @@ export default function SettingsPage() {
   const [newPinCode, setNewPinCode] = React.useState("");
   const [confirmNewPinCode, setConfirmNewPinCode] = React.useState("");
   const [pinLoading, setPinLoading] = React.useState(false);
+
+  // Clear all demo/test data state
+  const [clearDataConfirmOpen, setClearDataConfirmOpen] = React.useState(false);
+  const [clearDataLoading, setClearDataLoading] = React.useState(false);
+
+  const handleClearAllData = async () => {
+    setClearDataLoading(true);
+    try {
+      const res = await clearAllDemoDataAction();
+      if (res.success) {
+        toast.success("Barcha test ma'lumotlar (o‘quvchilar, guruhlar, to‘lovlar, davomat) tozalandi!");
+        setClearDataConfirmOpen(false);
+      } else {
+        toast.error(res.error || "Ma'lumotlarni tozalashda xatolik");
+      }
+    } catch {
+      toast.error("Kutilmagan xatolik yuz berdi");
+    } finally {
+      setClearDataLoading(false);
+    }
+  };
 
   React.useEffect(() => {
     async function load() {
@@ -534,6 +558,54 @@ export default function SettingsPage() {
           </Button>
         </div>
       </form>
+
+      {/* Danger Zone: Clear Demo / Test Data */}
+      <Card className="shadow-sm border-rose-200 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10">
+        <CardHeader>
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+            <Trash2 className="w-5 h-5 shrink-0" />
+            <CardTitle className="text-base font-bold">Ma'lumotlar Bazasini Tozalash</CardTitle>
+          </div>
+          <CardDescription className="text-xs">
+            Barcha dastlabki test/soxta ma'lumotlarni (o‘quvchilar, guruhlar, to‘lovlar, davomat) bir martada to‘liq o‘chirish
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-card">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Hamma test ma'lumotlarini tozalash
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Barcha soxta o‘quvchilar, guruhlar va to‘lovlar bazadan butunlay o‘chiriladi. PIN-kod va tizim sozlamalari saqlanib qoladi.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => setClearDataConfirmOpen(true)}
+              className="text-xs gap-1.5 h-9 shrink-0"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Barcha test ma'lumotlarini o‘chirish</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Clear Data Confirmation Dialog */}
+      <ConfirmDialog
+        open={clearDataConfirmOpen}
+        onOpenChange={setClearDataConfirmOpen}
+        title="Barcha test ma'lumotlarini o‘chirishni tasdiqlaysizmi?"
+        description="Diqqat! Barcha o‘quvchilar, guruhlar, to‘lovlar, davomat va baholar bazadan butunlay o‘chiriladi. Ushbu amalni ortga qaytarib bo‘lmaydi. Haqiqiy o‘quvchilaringizni noldan kiritish uchun bazani bo‘shatishni xohlaysizmi?"
+        confirmText="Ha, hammasini tozalash"
+        cancelText="Bekor qilish"
+        variant="destructive"
+        loading={clearDataLoading}
+        onConfirm={handleClearAllData}
+      />
     </div>
   );
 }

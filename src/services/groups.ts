@@ -68,18 +68,14 @@ export async function updateGroup(id: string, updates: GroupUpdate): Promise<Gro
   return data as Group;
 }
 
+import { deleteGroupAction } from "@/actions/groups";
+
 export async function deleteGroup(id: string): Promise<boolean> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("groups")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error deleting group:", error);
-    throw new Error(error.message);
+  const res = await deleteGroupAction(id);
+  if (!res.success) {
+    console.error("Error deleting group:", res.error);
+    throw new Error(res.error || "Guruhni o‘chirishda xatolik");
   }
-
   return true;
 }
 

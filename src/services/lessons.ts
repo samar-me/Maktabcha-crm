@@ -66,17 +66,13 @@ export async function updateLesson(id: string, updates: LessonUpdate): Promise<L
   return data as Lesson;
 }
 
+import { deleteLessonAction } from "@/actions/lessons";
+
 export async function deleteLesson(id: string): Promise<boolean> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("lessons")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error deleting lesson:", error);
-    throw new Error(error.message);
+  const res = await deleteLessonAction(id);
+  if (!res.success) {
+    console.error("Error deleting lesson:", res.error);
+    throw new Error(res.error || "Darsni o‘chirishda xatolik");
   }
-
   return true;
 }

@@ -72,18 +72,14 @@ export async function updateHomework(id: string, updates: HomeworkUpdate): Promi
   return data as Homework;
 }
 
+import { deleteHomeworkAction } from "@/actions/homework";
+
 export async function deleteHomework(id: string): Promise<boolean> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("homework")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error deleting homework:", error);
-    throw new Error(error.message);
+  const res = await deleteHomeworkAction(id);
+  if (!res.success) {
+    console.error("Error deleting homework:", res.error);
+    throw new Error(res.error || "Vazifani o‘chirishda xatolik");
   }
-
   return true;
 }
 

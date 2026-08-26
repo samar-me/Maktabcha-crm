@@ -63,17 +63,13 @@ export async function updateStudent(id: string, updates: StudentUpdate): Promise
   return data as Student;
 }
 
+import { deleteStudentAction } from "@/actions/students";
+
 export async function deleteStudent(id: string): Promise<boolean> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("students")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error deleting student:", error);
-    throw new Error(error.message);
+  const res = await deleteStudentAction(id);
+  if (!res.success) {
+    console.error("Error deleting student:", res.error);
+    throw new Error(res.error || "O‘quvchini o‘chirishda xatolik");
   }
-
   return true;
 }
