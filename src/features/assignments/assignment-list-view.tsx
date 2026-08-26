@@ -42,6 +42,7 @@ import {
   Loader2,
   ExternalLink,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -190,12 +191,25 @@ export function AssignmentListView() {
         title="Topshiriqlar"
         description="O‘quvchilar uchun interaktiv testlar va Telegram Mini App platformasi"
       >
-        <Button asChild size="sm" className="gap-1.5 h-9 text-xs font-semibold">
-          <Link href="/assignments/new">
-            <Plus className="w-4 h-4" />
-            <span>Yangi topshiriq</span>
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" variant="outline" className="gap-1.5 h-9 text-xs font-semibold">
+            <Link href="/assignments/new?mode=manual">
+              <Plus className="w-4 h-4" />
+              <span>Qo‘lda yaratish</span>
+            </Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            className="gap-1.5 h-9 text-xs font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xs"
+          >
+            <Link href="/assignments/new?mode=ai">
+              <Sparkles className="w-4 h-4" />
+              <span>✨ AI bilan yaratish</span>
+            </Link>
+          </Button>
+        </div>
       </PageHeader>
 
       {/* 4 Quick Stat Cards */}

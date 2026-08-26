@@ -16,6 +16,7 @@ import {
   BookOpen,
   AlertCircle,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -106,7 +107,14 @@ export function LessonDetailView({ lessonId }: LessonDetailViewProps) {
           </Link>
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button asChild size="sm" variant="outline" className="gap-1.5 border-blue-200 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40">
+            <Link href={`/assignments/new?mode=ai&lessonId=${lesson.id}&groupId=${lesson.group_id}`}>
+              <Sparkles className="w-4 h-4" />
+              <span>Shu darsdan test yaratish</span>
+            </Link>
+          </Button>
+
           <Button asChild size="sm" className="gap-1.5">
             <Link href={`/attendance?groupId=${lesson.group_id}&lessonId=${lesson.id}`}>
               <CalendarCheck2 className="w-4 h-4" />

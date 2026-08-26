@@ -31,11 +31,13 @@ import {
   Users,
   ShieldCheck,
   Trophy,
+  PenTool,
 } from "lucide-react";
 import { toast } from "sonner";
 
 interface AssignmentBuilderProps {
   groups: Group[];
+  onSwitchToAI?: () => void;
   initialData?: {
     id: string;
     groupId: string;
@@ -49,7 +51,7 @@ interface AssignmentBuilderProps {
   };
 }
 
-export function AssignmentBuilder({ groups, initialData }: AssignmentBuilderProps) {
+export function AssignmentBuilder({ groups, onSwitchToAI, initialData }: AssignmentBuilderProps) {
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
 
@@ -303,13 +305,33 @@ export function AssignmentBuilder({ groups, initialData }: AssignmentBuilderProp
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
         <Button variant="ghost" size="sm" asChild className="gap-2 self-start h-9 text-xs">
           <Link href="/assignments">
             <ArrowLeft className="w-4 h-4" />
             <span>Topshiriqlar ro‘yxatiga qaytish</span>
           </Link>
         </Button>
+
+        {onSwitchToAI && (
+          <div className="flex items-center p-1 bg-muted/60 rounded-xl border border-border gap-1 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={onSwitchToAI}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>AI bilan yaratish</span>
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-xs"
+            >
+              <PenTool className="w-3.5 h-3.5" />
+              <span>Qo‘lda yaratish</span>
+            </button>
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           <Button
