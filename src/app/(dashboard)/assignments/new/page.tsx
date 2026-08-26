@@ -6,6 +6,7 @@ interface NewAssignmentPageProps {
     mode?: string;
     lessonId?: string;
     groupId?: string;
+    curriculumItemId?: string;
   }>;
 }
 
@@ -15,7 +16,7 @@ export const metadata = {
 };
 
 export default async function NewAssignmentPage({ searchParams }: NewAssignmentPageProps) {
-  const { mode, lessonId, groupId } = await searchParams;
+  const { mode, lessonId, groupId, curriculumItemId } = await searchParams;
   const groups = await getGroups();
   const activeGroups = groups.filter((g) => g.status === "Faol");
 
@@ -27,6 +28,7 @@ export default async function NewAssignmentPage({ searchParams }: NewAssignmentP
       initialMode={initialMode}
       initialLessonId={lessonId}
       initialGroupId={groupId}
+      initialCurriculumItemId={curriculumItemId}
     />
   );
 }

@@ -60,6 +60,8 @@ export async function createAssignmentAction(data: {
   scoringRankStep?: number;
   scoringMinPoints?: number;
   antiCheatMode?: boolean;
+  curriculumItemId?: string;
+  lessonId?: string;
   questions: QuestionDraft[];
 }) {
   try {

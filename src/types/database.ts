@@ -186,6 +186,7 @@ export type Database = {
         Row: {
           id: string;
           group_id: string;
+          curriculum_item_id: string | null;
           date: string;
           start_time: string;
           end_time: string;
@@ -199,6 +200,7 @@ export type Database = {
         Insert: {
           id?: string;
           group_id: string;
+          curriculum_item_id?: string | null;
           date: string;
           start_time: string;
           end_time: string;
@@ -212,6 +214,7 @@ export type Database = {
         Update: {
           id?: string;
           group_id?: string;
+          curriculum_item_id?: string | null;
           date?: string;
           start_time?: string;
           end_time?: string;
@@ -562,6 +565,8 @@ export type Database = {
         Row: {
           id: string;
           group_id: string;
+          lesson_id: string | null;
+          curriculum_item_id: string | null;
           title: string;
           description: string | null;
           public_token: string;
@@ -579,6 +584,8 @@ export type Database = {
         Insert: {
           id?: string;
           group_id: string;
+          lesson_id?: string | null;
+          curriculum_item_id?: string | null;
           title: string;
           description?: string | null;
           public_token: string;
@@ -596,6 +603,8 @@ export type Database = {
         Update: {
           id?: string;
           group_id?: string;
+          lesson_id?: string | null;
+          curriculum_item_id?: string | null;
           title?: string;
           description?: string | null;
           public_token?: string;
@@ -850,6 +859,91 @@ export type Database = {
         };
         Relationships: [];
       };
+      curricula: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          course_name: string;
+          group_id: string | null;
+          status: "Faol" | "Arxivlangan";
+          academic_period: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          course_name: string;
+          group_id?: string | null;
+          status?: "Faol" | "Arxivlangan";
+          academic_period?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          course_name?: string;
+          group_id?: string | null;
+          status?: "Faol" | "Arxivlangan";
+          academic_period?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      curriculum_items: {
+        Row: {
+          id: string;
+          curriculum_id: string;
+          order_number: number;
+          title: string;
+          description: string | null;
+          objective: string | null;
+          practice: string | null;
+          homework_plan: string | null;
+          duration_minutes: number;
+          category: string | null;
+          planned_date: string | null;
+          status: "Rejalashtirilgan" | "O‘tilgan" | "O‘tkazib yuborilgan" | "Ko‘chirilgan";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          curriculum_id: string;
+          order_number: number;
+          title: string;
+          description?: string | null;
+          objective?: string | null;
+          practice?: string | null;
+          homework_plan?: string | null;
+          duration_minutes?: number;
+          category?: string | null;
+          planned_date?: string | null;
+          status?: "Rejalashtirilgan" | "O‘tilgan" | "O‘tkazib yuborilgan" | "Ko‘chirilgan";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          curriculum_id?: string;
+          order_number?: number;
+          title?: string;
+          description?: string | null;
+          objective?: string | null;
+          practice?: string | null;
+          homework_plan?: string | null;
+          duration_minutes?: number;
+          category?: string | null;
+          planned_date?: string | null;
+          status?: "Rejalashtirilgan" | "O‘tilgan" | "O‘tkazib yuborilgan" | "Ko‘chirilgan";
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -922,6 +1016,11 @@ export type GradeInsert = Database["public"]["Tables"]["grades"]["Insert"];
 export type GradeUpdate = Database["public"]["Tables"]["grades"]["Update"];
 export type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
 export type PaymentUpdate = Database["public"]["Tables"]["payments"]["Update"];
-export type SettingsInsert = Database["public"]["Tables"]["settings"]["Insert"];
-export type SettingsUpdate = Database["public"]["Tables"]["settings"]["Update"];
+export type Curriculum = Database["public"]["Tables"]["curricula"]["Row"];
+export type CurriculumItem = Database["public"]["Tables"]["curriculum_items"]["Row"];
+
+export type CurriculumInsert = Database["public"]["Tables"]["curricula"]["Insert"];
+export type CurriculumUpdate = Database["public"]["Tables"]["curricula"]["Update"];
+export type CurriculumItemInsert = Database["public"]["Tables"]["curriculum_items"]["Insert"];
+export type CurriculumItemUpdate = Database["public"]["Tables"]["curriculum_items"]["Update"];
 

@@ -9,6 +9,8 @@ import { getAttendance } from "@/services/attendance";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { getCurriculumItemByIdAction } from "@/actions/curriculum";
+import { CurriculumItem } from "@/types/curriculum";
 import {
   ArrowLeft,
   CalendarCheck2,
@@ -17,6 +19,7 @@ import {
   AlertCircle,
   Loader2,
   Sparkles,
+  Layers,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -30,6 +33,7 @@ export function LessonDetailView({ lessonId }: LessonDetailViewProps) {
   const [group, setGroup] = React.useState<Group | null>(null);
   const [students, setStudents] = React.useState<Student[]>([]);
   const [attendance, setAttendance] = React.useState<Attendance[]>([]);
+  const [curriculumItem, setCurriculumItem] = React.useState<CurriculumItem | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -43,15 +47,27 @@ export function LessonDetailView({ lessonId }: LessonDetailViewProps) {
         }
         setLesson(ls);
 
-        const [grp, grpStudents, att] = await Promise.all([
+        const promises: Promise<any>[] = [
           getGroupById(ls.group_id),
           getStudentsByGroupId(ls.group_id),
           getAttendance({ lessonId: ls.id }),
-        ]);
+        ];
+
+        if (ls.curriculum_item_id) {
+          promises.push(
+            getCurriculumItemByIdAction(ls.curriculum_item_id).catch(() => ({
+              success: false,
+              data: null,
+            }))
+          );
+        }
+
+        const [grp, grpStudents, att, cItemRes] = await Promise.all(promises);
 
         setGroup(grp);
         setStudents(grpStudents);
         setAttendance(att);
+        if (cItemRes?.data) setCurriculumItem(cItemRes.data);
       } catch {
         toast.error("Dars ma'lumotlarini yuklashda xatolik");
       } finally {
@@ -128,11 +144,21 @@ export function LessonDetailView({ lessonId }: LessonDetailViewProps) {
       <Card className="p-6 shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
                 {group?.name || "Guruh"}
               </span>
               <StatusBadge status={lesson.status} />
+
+              {curriculumItem && (
+                <Link
+                  href={`/curriculum/${curriculumItem.curriculum_id}/items/${curriculumItem.id}`}
+                  className="text-xs font-semibold px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:underline flex items-center gap-1"
+                >
+                  <Layers className="w-3 h-3" />
+                  <span>Ish reja: №{curriculumItem.order_number}</span>
+                </Link>
+              )}
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {lesson.topic}

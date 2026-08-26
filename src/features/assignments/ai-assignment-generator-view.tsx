@@ -18,9 +18,11 @@ import {
   improveQuestionWithAIAction,
   getAIAvailabilityAction,
   getLessonContextForAIAction,
+  getCurriculumContextForAIAction,
 } from "@/actions/ai-assignment";
 import { createAssignmentAction, publishAssignmentAction } from "@/actions/assignments";
 import { getLessons } from "@/services/lessons";
+import { getCurriculaAction, getCurriculumItemsAction } from "@/actions/curriculum";
 import { QuestionDraft } from "@/types/assignment";
 import { AssignmentBuilder } from "./assignment-builder";
 import { Button } from "@/components/ui/button";
@@ -59,6 +61,7 @@ import {
   Layers,
   Code,
   Zap,
+  GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -66,6 +69,7 @@ interface AIAssignmentGeneratorViewProps {
   groups: Group[];
   initialLessonId?: string;
   initialGroupId?: string;
+  initialCurriculumItemId?: string;
   onSwitchToManual?: () => void;
 }
 
@@ -73,6 +77,7 @@ export function AIAssignmentGeneratorView({
   groups,
   initialLessonId,
   initialGroupId,
+  initialCurriculumItemId,
   onSwitchToManual,
 }: AIAssignmentGeneratorViewProps) {
   const router = useRouter();
@@ -82,8 +87,8 @@ export function AIAssignmentGeneratorView({
   const [modelName, setModelName] = React.useState<string>("");
 
   // Source Form State
-  const [sourceType, setSourceType] = React.useState<"topic" | "crm_lesson" | "text">(
-    initialLessonId ? "crm_lesson" : "topic"
+  const [sourceType, setSourceType] = React.useState<"topic" | "crm_lesson" | "curriculum" | "text">(
+    initialCurriculumItemId ? "curriculum" : initialLessonId ? "crm_lesson" : "topic"
   );
   const [selectedGroupId, setSelectedGroupId] = React.useState<string>(
     initialGroupId || (groups[0]?.id || "")
@@ -97,6 +102,16 @@ export function AIAssignmentGeneratorView({
   const [selectedLessonId, setSelectedLessonId] = React.useState<string>(initialLessonId || "");
   const [lessonContext, setLessonContext] = React.useState<any | null>(null);
   const [loadingLessons, setLoadingLessons] = React.useState(false);
+
+  // Curriculum State
+  const [curriculaList, setCurriculaList] = React.useState<any[]>([]);
+  const [selectedCurriculumId, setSelectedCurriculumId] = React.useState<string>("");
+  const [curriculumItemsList, setCurriculumItemsList] = React.useState<any[]>([]);
+  const [selectedCurriculumItemId, setSelectedCurriculumItemId] = React.useState<string>(
+    initialCurriculumItemId || ""
+  );
+  const [curriculumContext, setCurriculumContext] = React.useState<any | null>(null);
+  const [loadingCurricula, setLoadingCurricula] = React.useState(false);
 
   // Settings State
   const [questionCount, setQuestionCount] = React.useState<number>(10);
@@ -177,6 +192,67 @@ export function AIAssignmentGeneratorView({
     loadContext();
   }, [sourceType, selectedLessonId]);
 
+  // Load Curricula when curriculum source is selected
+  React.useEffect(() => {
+    if (sourceType !== "curriculum") return;
+    async function loadCurricula() {
+      try {
+        setLoadingCurricula(true);
+        const res = await getCurriculaAction();
+        if (res.success && res.data) {
+          setCurriculaList(res.data);
+          if (res.data.length > 0 && !selectedCurriculumId) {
+            setSelectedCurriculumId(res.data[0].id);
+          }
+        } else {
+          setCurriculaList([]);
+        }
+      } catch {
+        setCurriculaList([]);
+      } finally {
+        setLoadingCurricula(false);
+      }
+    }
+    loadCurricula();
+  }, [sourceType, selectedCurriculumId]);
+
+  // Load Curriculum Items when selected curriculum changes
+  React.useEffect(() => {
+    if (sourceType !== "curriculum" || !selectedCurriculumId) return;
+    async function loadItems() {
+      try {
+        const res = await getCurriculumItemsAction(selectedCurriculumId);
+        if (res.success && res.data) {
+          setCurriculumItemsList(res.data);
+          if (res.data.length > 0 && !selectedCurriculumItemId) {
+            setSelectedCurriculumItemId(res.data[0].id);
+          }
+        } else {
+          setCurriculumItemsList([]);
+        }
+      } catch {
+        setCurriculumItemsList([]);
+      }
+    }
+    loadItems();
+  }, [sourceType, selectedCurriculumId, selectedCurriculumItemId]);
+
+  // Load Curriculum Context when selected item changes
+  React.useEffect(() => {
+    if (sourceType !== "curriculum" || !selectedCurriculumItemId) return;
+    async function loadContext() {
+      try {
+        const res = await getCurriculumContextForAIAction(selectedCurriculumItemId);
+        if (res.success && res.context) {
+          setCurriculumContext(res.context);
+        }
+      } catch {
+        setCurriculumContext(null);
+      }
+    }
+    loadContext();
+  }, [sourceType, selectedCurriculumItemId]);
+
   // Staged loading animation messages
   React.useEffect(() => {
     if (!isGenerating) return;
@@ -221,6 +297,11 @@ export function AIAssignmentGeneratorView({
       return;
     }
 
+    if (sourceType === "curriculum" && !selectedCurriculumItemId) {
+      toast.error("Iltimos, ish rejasidan mavzuni tanlang");
+      return;
+    }
+
     if (sourceType === "crm_lesson" && !selectedLessonId) {
       toast.error("Iltimos, darsni tanlang");
       return;
@@ -238,7 +319,9 @@ export function AIAssignmentGeneratorView({
       type: sourceType,
       topic: topicInput.trim(),
       instruction: instructionInput.trim(),
-      lessonId: selectedLessonId,
+      curriculumItemId: selectedCurriculumItemId || undefined,
+      curriculumContext: curriculumContext || undefined,
+      lessonId: selectedLessonId || undefined,
       lessonContext: lessonContext || undefined,
       textMaterial: textMaterialInput.trim(),
     };
@@ -275,7 +358,9 @@ export function AIAssignmentGeneratorView({
       type: sourceType,
       topic: topicInput.trim() || generatedDraft.title,
       instruction: instructionInput.trim(),
-      lessonId: selectedLessonId,
+      curriculumItemId: selectedCurriculumItemId || undefined,
+      curriculumContext: curriculumContext || undefined,
+      lessonId: selectedLessonId || undefined,
       lessonContext: lessonContext || undefined,
       textMaterial: textMaterialInput.trim(),
     };
@@ -385,6 +470,8 @@ export function AIAssignmentGeneratorView({
         scoringRankStep: 100,
         scoringMinPoints: 100,
         antiCheatMode: true,
+        curriculumItemId: sourceType === "curriculum" ? selectedCurriculumItemId || undefined : undefined,
+        lessonId: sourceType === "crm_lesson" ? selectedLessonId || undefined : undefined,
         questions: questionsDraft,
       });
 
@@ -504,8 +591,8 @@ export function AIAssignmentGeneratorView({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 3 Source Switch Buttons */}
-              <div className="grid grid-cols-3 gap-2">
+              {/* 4 Source Switch Buttons */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   type="button"
                   onClick={() => setSourceType("topic")}
@@ -521,6 +608,19 @@ export function AIAssignmentGeneratorView({
 
                 <button
                   type="button"
+                  onClick={() => setSourceType("curriculum")}
+                  className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 text-xs transition-all ${
+                    sourceType === "curriculum"
+                      ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 font-bold shadow-xs"
+                      : "border-border hover:bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>📚 Ish rejadan</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setSourceType("crm_lesson")}
                   className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 text-xs transition-all ${
                     sourceType === "crm_lesson"
@@ -528,8 +628,8 @@ export function AIAssignmentGeneratorView({
                       : "border-border hover:bg-muted text-muted-foreground"
                   }`}
                 >
-                  <Layers className="w-4 h-4" />
-                  <span>CRM’dagi darsdan</span>
+                  <GraduationCap className="w-4 h-4" />
+                  <span>CRM darsidan</span>
                 </button>
 
                 <button
@@ -575,6 +675,81 @@ export function AIAssignmentGeneratorView({
                       className="h-9 text-xs"
                     />
                   </div>
+                </div>
+              )}
+
+              {/* Source 2: Curriculum Plan */}
+              {sourceType === "curriculum" && (
+                <div className="space-y-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Ish reja / O‘quv dasturi</Label>
+                      <select
+                        value={selectedCurriculumId}
+                        onChange={(e) => setSelectedCurriculumId(e.target.value)}
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-xs font-medium"
+                      >
+                        {loadingCurricula ? (
+                          <option>Yuklanmoqda...</option>
+                        ) : curriculaList.length === 0 ? (
+                          <option value="">Ish rejalar mavjud emas</option>
+                        ) : (
+                          curriculaList.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name} ({c.course_name})
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Mavzuni tanlang</Label>
+                      <select
+                        value={selectedCurriculumItemId}
+                        onChange={(e) => setSelectedCurriculumItemId(e.target.value)}
+                        disabled={curriculumItemsList.length === 0}
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-xs font-medium"
+                      >
+                        {curriculumItemsList.length === 0 ? (
+                          <option value="">Ushbu rejada mavzular yo‘q</option>
+                        ) : (
+                          curriculumItemsList.map((it) => (
+                            <option key={it.id} value={it.id}>
+                              №{it.order_number}. {it.title} {it.status === "O‘tilgan" ? "✓" : ""}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  {curriculumContext && (
+                    <div className="p-3.5 rounded-xl bg-muted/60 border border-border text-xs space-y-1.5 animate-in fade-in">
+                      <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Rejalashtirilgan mavzu tafsilotlari:</span>
+                      </div>
+                      <p className="font-semibold text-foreground">
+                        Mavzu: {curriculumContext.title}
+                      </p>
+                      {curriculumContext.objective && (
+                        <p className="text-muted-foreground line-clamp-2">
+                          🎯 Maqsad: {curriculumContext.objective}
+                        </p>
+                      )}
+                      {curriculumContext.practice && (
+                        <p className="text-muted-foreground line-clamp-1">
+                          💻 Amaliyot: {curriculumContext.practice}
+                        </p>
+                      )}
+                      {curriculumContext.homeworkPlan && (
+                        <p className="text-muted-foreground line-clamp-1">
+                          📝 Uy vazifasi: {curriculumContext.homeworkPlan}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -16,6 +16,7 @@ import { getLessons } from "@/services/lessons";
 import { getAttendance } from "@/services/attendance";
 import { getDebtors, DebtorInfo } from "@/services/debtors";
 import { getMonthlyFinancialSummary, MonthlyFinancialSummary } from "@/services/reports";
+import { getNextCurriculumTopicAction } from "@/actions/curriculum";
 import { StatCard } from "@/components/shared/stat-card";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -38,6 +39,9 @@ import {
   Receipt,
   CheckCircle2,
   Loader2,
+  Layers,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import {
@@ -69,6 +73,7 @@ export function DashboardView() {
     collectionRate: 0,
     debtorsCount: 0,
   });
+  const [nextCurriculumTopic, setNextCurriculumTopic] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   const [paymentDialogOpen, setPaymentDialogOpen] = React.useState(false);
@@ -80,7 +85,7 @@ export function DashboardView() {
   const loadData = React.useCallback(async () => {
     try {
       setLoading(true);
-      const [stList, grList, pmtList, lsList, attList, dList, summ] = await Promise.all([
+      const [stList, grList, pmtList, lsList, attList, dList, summ, nextTopicRes] = await Promise.all([
         getStudents(),
         getGroups(),
         getPayments(),
@@ -88,6 +93,7 @@ export function DashboardView() {
         getAttendance(),
         getDebtors(),
         getMonthlyFinancialSummary(),
+        getNextCurriculumTopicAction().catch(() => ({ success: false, data: null })),
       ]);
       setStudents(stList);
       setGroups(grList);
@@ -96,6 +102,7 @@ export function DashboardView() {
       setAttendance(attList);
       setDebtors(dList);
       setSummary(summ);
+      setNextCurriculumTopic(nextTopicRes?.data || null);
     } catch {
       toast.error("Dashboard ma'lumotlarini yuklashda xatolik yuz berdi");
     } finally {
@@ -262,6 +269,65 @@ export function DashboardView() {
             iconBgClass="bg-teal-50 dark:bg-teal-950/50"
           />
         </div>
+      )}
+
+      {/* Next Curriculum Topic Quick Action Card */}
+      {nextCurriculumTopic && (
+        <Card className="border-blue-200 dark:border-blue-900/60 bg-gradient-to-r from-blue-50/70 via-indigo-50/30 to-purple-50/40 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/20 shadow-xs">
+          <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white flex items-center gap-1">
+                  <Layers className="w-3 h-3" />
+                  <span>Ish reja bo‘yicha keyingi mavzu</span>
+                </span>
+                <span className="text-[11px] font-semibold text-muted-foreground">
+                  {nextCurriculumTopic.curriculum.name}
+                  {nextCurriculumTopic.curriculum.groups
+                    ? ` (${nextCurriculumTopic.curriculum.groups.name})`
+                    : ""}
+                </span>
+              </div>
+
+              <h3 className="font-bold text-base sm:text-lg text-foreground">
+                №{nextCurriculumTopic.item.order_number}. {nextCurriculumTopic.item.title}
+              </h3>
+
+              {nextCurriculumTopic.item.objective && (
+                <p className="text-xs text-muted-foreground line-clamp-1">
+                  🎯 {nextCurriculumTopic.item.objective}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <Button
+                asChild
+                size="sm"
+                className="h-9 text-xs font-semibold gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xs"
+              >
+                <Link
+                  href={`/assignments/new?mode=ai&curriculumItemId=${nextCurriculumTopic.item.id}&groupId=${nextCurriculumTopic.curriculum.group_id || ""}`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>AI test yaratish</span>
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-9 text-xs font-semibold gap-1.5 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+              >
+                <Link href={`/curriculum/${nextCurriculumTopic.curriculum.id}`}>
+                  <span>Rejani ko‘rish</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Charts Section: Revenue & Attendance */}

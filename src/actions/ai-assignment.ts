@@ -82,6 +82,46 @@ export async function getLessonContextForAIAction(lessonId: string) {
 }
 
 /**
+ * Load safe curriculum topic context without any student PII
+ */
+export async function getCurriculumContextForAIAction(itemId: string) {
+  const isAdmin = await verifyAdminAuth();
+  if (!isAdmin) {
+    return { success: false, error: "Ruxsat berilmagan." };
+  }
+
+  try {
+    const supabase = createAdminClient();
+    const { data: item, error } = await supabase
+      .from("curriculum_items")
+      .select("id, title, objective, description, practice, homework_plan, category, curricula(course_name, name)")
+      .eq("id", itemId)
+      .maybeSingle();
+
+    if (error || !item) {
+      return { success: false, error: "Mavzu topilmadi." };
+    }
+
+    const curr = (item as any).curricula;
+
+    return {
+      success: true,
+      context: {
+        title: item.title,
+        objective: item.objective || "",
+        description: item.description || "",
+        practice: item.practice || "",
+        homeworkPlan: item.homework_plan || "",
+        courseName: curr?.course_name || curr?.name || "",
+        category: item.category || "",
+      },
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Mavzu ma'lumotlarini yuklashda xatolik." };
+  }
+}
+
+/**
  * Generate complete assignment draft with AI
  */
 export async function generateAssignmentWithAIAction(
@@ -101,6 +141,14 @@ export async function generateAssignmentWithAIAction(
     const lessonRes = await getLessonContextForAIAction(source.lessonId);
     if (lessonRes.success && lessonRes.context) {
       source.lessonContext = lessonRes.context;
+    }
+  }
+
+  // Load curriculum item context securely on server if curriculum source was selected
+  if (source.type === "curriculum" && source.curriculumItemId && !source.curriculumContext) {
+    const currRes = await getCurriculumContextForAIAction(source.curriculumItemId);
+    if (currRes.success && currRes.context) {
+      source.curriculumContext = currRes.context;
     }
   }
 

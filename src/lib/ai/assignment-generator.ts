@@ -92,7 +92,10 @@ export async function generateAssignmentDraft(
     contextDescription = `MANBA TURI: Mavzu\nMAVZU: ${source.topic || "Umumiy mavzu"}\nQO‘SHIMCHA KO‘RSATMA: ${source.instruction || "Mavzuni to‘liq qamrab olinsin."}`;
   } else if (source.type === "crm_lesson" && source.lessonContext) {
     const ctx = source.lessonContext;
-    contextDescription = `MANBA TURI: CRM Darsi\nKURSYOKI GURUH: ${ctx.courseName || ctx.groupName || ""}\nDARS MAVZUSI: ${ctx.topic}\nDARS TAVSIFI: ${ctx.description || "Tavsif yo‘q"}\nUYGA VAZIFA: ${ctx.homework || "Vazifa yo‘q"}`;
+    contextDescription = `MANBA TURI: CRM Darsi\nKURS YOKI GURUH: ${ctx.courseName || ctx.groupName || ""}\nDARS MAVZUSI: ${ctx.topic}\nDARS TAVSIFI: ${ctx.description || "Tavsif yo‘q"}\nUYGA VAZIFA: ${ctx.homework || "Vazifa yo‘q"}`;
+  } else if (source.type === "curriculum" && source.curriculumContext) {
+    const ctx = source.curriculumContext;
+    contextDescription = `MANBA TURI: O‘quv rejasi (Ish reja)\nKURS / FAN: ${ctx.courseName || ""}\nMAVZU: ${ctx.title}\nMAQSAD: ${ctx.objective || "Kiritilmagan"}\nTAVSIF: ${ctx.description || "Kiritilmagan"}\nAMALIYOT: ${ctx.practice || "Kiritilmagan"}\nUY VAZIFASI REJASI: ${ctx.homeworkPlan || "Kiritilmagan"}`;
   } else if (source.type === "text") {
     const trimmedText = (source.textMaterial || "").slice(0, 10000).trim();
     contextDescription = `MANBA TURI: Darslik/Matn materiali\nMATN MAZMUNI:\n"""\n${trimmedText}\n"""\nSavollar asosan ushbu matnda berilgan faktlar va tushunchalar asosida tuzilsin.`;

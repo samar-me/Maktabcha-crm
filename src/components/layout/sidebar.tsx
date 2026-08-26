@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Lock,
   Target,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -55,14 +56,19 @@ export const navItems: NavItem[] = [
     icon: UsersRound,
   },
   {
-    title: "Davomat",
-    href: "/attendance",
-    icon: CalendarCheck2,
-  },
-  {
     title: "Darslar",
     href: "/lessons",
     icon: BookOpen,
+  },
+  {
+    title: "Ish reja",
+    href: "/curriculum",
+    icon: Layers,
+  },
+  {
+    title: "Davomat",
+    href: "/attendance",
+    icon: CalendarCheck2,
   },
   {
     title: "Vazifalar",

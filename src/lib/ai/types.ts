@@ -30,7 +30,7 @@ export type GeneratedOption = z.infer<typeof generatedOptionSchema>;
 export type GeneratedQuestion = z.infer<typeof generatedQuestionSchema>;
 export type GeneratedAssignmentDraft = z.infer<typeof generatedAssignmentDraftSchema>;
 
-export type AISourceType = "topic" | "crm_lesson" | "text";
+export type AISourceType = "topic" | "crm_lesson" | "curriculum" | "text";
 
 export type QuestionDifficulty = "Oson" | "O‘rtacha" | "Qiyin" | "Aralash";
 
@@ -47,6 +47,16 @@ export interface AIGeneratorSource {
     topic: string;
     description?: string;
     homework?: string;
+  };
+  curriculumItemId?: string;
+  curriculumContext?: {
+    title: string;
+    objective?: string;
+    description?: string;
+    practice?: string;
+    homeworkPlan?: string;
+    courseName?: string;
+    category?: string;
   };
   textMaterial?: string;
 }

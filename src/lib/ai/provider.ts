@@ -18,7 +18,7 @@ export function getAIConfig(): AIProviderConfig {
   let model = process.env.AI_MODEL || "";
   if (!model) {
     if (provider === "gemini") {
-      model = "gemini-2.5-flash";
+      model = "gemini-3-flash-preview";
     } else if (provider === "openai") {
       model = "gpt-4o-mini";
     } else {

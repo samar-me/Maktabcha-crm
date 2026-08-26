@@ -10,6 +10,7 @@ interface NewAssignmentPageViewProps {
   initialMode?: "ai" | "manual";
   initialLessonId?: string;
   initialGroupId?: string;
+  initialCurriculumItemId?: string;
 }
 
 export function NewAssignmentPageView({
@@ -17,6 +18,7 @@ export function NewAssignmentPageView({
   initialMode = "ai",
   initialLessonId,
   initialGroupId,
+  initialCurriculumItemId,
 }: NewAssignmentPageViewProps) {
   const [mode, setMode] = React.useState<"ai" | "manual">(initialMode);
 
@@ -26,6 +28,7 @@ export function NewAssignmentPageView({
         groups={groups}
         initialLessonId={initialLessonId}
         initialGroupId={initialGroupId}
+        initialCurriculumItemId={initialCurriculumItemId}
         onSwitchToManual={() => setMode("manual")}
       />
     );

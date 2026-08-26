@@ -20,6 +20,7 @@ export async function middleware(request: NextRequest) {
     "/reports",
     "/settings",
     "/assignments",
+    "/curriculum",
   ];
 
   const isProtected = protectedRoutes.some(

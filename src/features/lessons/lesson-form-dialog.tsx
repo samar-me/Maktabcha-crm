@@ -24,6 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { getCurriculaAction, getCurriculumItemsAction } from "@/actions/curriculum";
+import { CurriculumItem } from "@/types/curriculum";
+
 interface LessonFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,6 +46,8 @@ export function LessonFormDialog({
 }: LessonFormDialogProps) {
   const isEditing = !!lesson;
   const [loading, setLoading] = React.useState(false);
+  const [curriculumTopics, setCurriculumTopics] = React.useState<CurriculumItem[]>([]);
+  const [selectedCurriculumItemId, setSelectedCurriculumItemId] = React.useState<string>("");
 
   const {
     register,
@@ -68,6 +73,44 @@ export function LessonFormDialog({
   const selectedGroupId = watch("group_id");
   const selectedStatus = watch("status");
 
+  // Load curriculum topics for the selected group or general curricula
+  React.useEffect(() => {
+    if (!selectedGroupId) return;
+    async function loadTopics() {
+      try {
+        const cRes = await getCurriculaAction({ groupId: selectedGroupId });
+        let curricula = cRes.success && cRes.data ? cRes.data : [];
+        if (curricula.length === 0) {
+          const allRes = await getCurriculaAction();
+          curricula = allRes.success && allRes.data ? allRes.data : [];
+        }
+        if (curricula.length > 0) {
+          const itemsRes = await getCurriculumItemsAction(curricula[0].id);
+          setCurriculumTopics(itemsRes.success && itemsRes.data ? itemsRes.data : []);
+        } else {
+          setCurriculumTopics([]);
+        }
+      } catch {
+        setCurriculumTopics([]);
+      }
+    }
+    loadTopics();
+  }, [selectedGroupId, open]);
+
+  // Handle prefill from curriculum topic
+  const handleSelectCurriculumTopic = (itemId: string) => {
+    setSelectedCurriculumItemId(itemId);
+    const item = curriculumTopics.find((t) => t.id === itemId);
+    if (item) {
+      setValue("topic", item.title);
+      const descParts = [item.objective, item.description, item.practice]
+        .filter(Boolean)
+        .join("\n\n");
+      if (descParts) setValue("description", descParts);
+      if (item.homework_plan) setValue("homework", item.homework_plan);
+    }
+  };
+
   React.useEffect(() => {
     if (lesson) {
       reset({
@@ -91,6 +134,7 @@ export function LessonFormDialog({
         homework: "",
         status: "Rejalashtirilgan",
       });
+      setSelectedCurriculumItemId("");
     }
   }, [lesson, initialGroupId, groups, reset, open]);
 
@@ -202,6 +246,27 @@ export function LessonFormDialog({
               />
             </div>
           </div>
+
+          {/* Optional Curriculum Topic Prefill */}
+          {curriculumTopics.length > 0 && !isEditing && (
+            <div className="space-y-1.5 p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40">
+              <Label className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                📚 Ish rejadan tanlash (Mavzu va reja avtomatik to‘ldiriladi)
+              </Label>
+              <select
+                value={selectedCurriculumItemId}
+                onChange={(e) => handleSelectCurriculumTopic(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-background text-xs font-medium text-foreground"
+              >
+                <option value="">-- Ish rejadan tanlash (ixtiyoriy) --</option>
+                {curriculumTopics.map((it) => (
+                  <option key={it.id} value={it.id}>
+                    №{it.order_number}. {it.title} {it.status === "O‘tilgan" ? "✓ (O‘tilgan)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Topic */}
           <div className="space-y-1.5">

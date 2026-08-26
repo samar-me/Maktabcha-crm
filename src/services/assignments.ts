@@ -164,6 +164,8 @@ export async function createAssignment(data: {
   scoringRankStep?: number;
   scoringMinPoints?: number;
   antiCheatMode?: boolean;
+  curriculumItemId?: string;
+  lessonId?: string;
   questions: QuestionDraft[];
 }) {
   const supabase = createAdminClient();
@@ -182,6 +184,8 @@ export async function createAssignment(data: {
       scoring_rank_step: data.scoringRankStep || 100,
       scoring_min_points: data.scoringMinPoints || 100,
       anti_cheat_mode: data.antiCheatMode ?? true,
+      curriculum_item_id: data.curriculumItemId || null,
+      lesson_id: data.lessonId || null,
     })
     .select("id")
     .single();
