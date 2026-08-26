@@ -12,6 +12,7 @@ import {
 } from "@/actions/curriculum";
 import { generateCurriculumExcelTemplate } from "@/lib/curriculum-import";
 import { CurriculumFormDialog } from "./curriculum-form-dialog";
+import { CurriculumImportDialog } from "./curriculum-import-dialog";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -41,6 +42,7 @@ import {
   ArrowRight,
   Download,
   Percent,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -62,6 +64,9 @@ export function CurriculumListView({
   // Create/Edit Dialog
   const [formOpen, setFormOpen] = React.useState(false);
   const [editingCurriculum, setEditingCurriculum] = React.useState<Curriculum | null>(null);
+
+  // Universal Import Dialog
+  const [importDialogOpen, setImportDialogOpen] = React.useState(false);
 
   // Delete Dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -171,16 +176,30 @@ export function CurriculumListView({
         title="Ish reja / O‘quv dasturi"
         description="Rejalashtirilgan mavzular, darslar, amaliyot va testlar tizimi"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setImportDialogOpen(true)}
+            className="gap-1.5 h-9 text-xs font-semibold border-border hover:bg-muted/60"
+          >
+            <Upload className="w-4 h-4 text-blue-600" />
+            <span>📥 Fayldan yuklash</span>
+            <span className="hidden lg:inline text-[10px] text-muted-foreground font-normal">
+              (Excel, Word, PDF, CSV, TXT)
+            </span>
+          </Button>
+
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleDownloadTemplate}
-            className="gap-1.5 h-9 text-xs font-semibold"
+            className="gap-1.5 h-9 text-xs font-semibold hidden md:inline-flex"
           >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Excel namuna</span>
+            <Download className="w-4 h-4 text-emerald-600" />
+            <span>Excel namuna</span>
           </Button>
 
           <Button
@@ -447,6 +466,18 @@ export function CurriculumListView({
           await refreshList();
           if (newId && !editingCurriculum) {
             router.push(`/curriculum/${newId}`);
+          }
+        }}
+      />
+
+      {/* Universal File Importer Dialog */}
+      <CurriculumImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={async (targetId) => {
+          await refreshList();
+          if (targetId) {
+            router.push(`/curriculum/${targetId}`);
           }
         }}
       />

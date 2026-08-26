@@ -370,3 +370,54 @@ export async function createLessonFromCurriculumItemAction(
     return { success: false, error: err.message || "Dars yaratishda xatolik yuz berdi." };
   }
 }
+
+/**
+ * Universal File Parser Action (Node.js runtime)
+ */
+export async function parseUniversalCurriculumFileAction(formData: FormData) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) return { success: false, error: "Ruxsat berilmagan." };
+
+  try {
+    const file = formData.get("file") as File | null;
+    const sheetName = (formData.get("sheetName") as string | null) || undefined;
+
+    if (!file) {
+      return { success: false, error: "Fayl tanlanmadi." };
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { parseUniversalCurriculumFile } = await import("@/lib/curriculum-import");
+
+    const result = await parseUniversalCurriculumFile({
+      name: file.name,
+      size: file.size,
+      buffer,
+      type: file.type,
+      sheetName,
+    });
+
+    return { success: result.success, result };
+  } catch (err: any) {
+    console.error("Universal File Parser Action Error:", err);
+    return { success: false, error: err.message || "Faylni tahlil qilishda xatolik." };
+  }
+}
+
+/**
+ * AI-Assisted Structure Extraction Server Action
+ */
+export async function parseCurriculumTextWithAIAction(rawText: string) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) return { success: false, error: "Ruxsat berilmagan." };
+
+  try {
+    const { parseCurriculumWithAI } = await import("@/lib/curriculum-import");
+    const result = await parseCurriculumWithAI(rawText);
+    return { success: true, data: result };
+  } catch (err: any) {
+    return { success: false, error: err.message || "AI tahlilida xatolik yuz berdi." };
+  }
+}

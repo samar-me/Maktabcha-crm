@@ -254,10 +254,13 @@ export function CurriculumDetailView({
                   variant="outline"
                   size="sm"
                   onClick={() => setImportDialogOpen(true)}
-                  className="gap-1.5 h-9 text-xs font-semibold"
+                  className="gap-1.5 h-9 text-xs font-semibold border-border hover:bg-muted/60"
                 >
-                  <Upload className="w-4 h-4" />
-                  <span>Excel / Matndan yuklash</span>
+                  <Upload className="w-4 h-4 text-blue-600" />
+                  <span>📥 Fayldan yuklash</span>
+                  <span className="hidden lg:inline text-[10px] text-muted-foreground font-normal">
+                    (Excel, Word, PDF, CSV, TXT)
+                  </span>
                 </Button>
 
                 <Button
