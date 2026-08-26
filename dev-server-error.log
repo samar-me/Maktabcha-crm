@@ -1,0 +1,725 @@
+ ⨯ ./src/features/auth/login-form.tsx
+Error: 
+
+Caused by:
+    0: Failed to read source code from C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\src\features\auth\login-form.tsx
+    1: The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/features/auth/login-form.tsx
+./src/app/(auth)/login/page.tsx
+ ⚠ Fast Refresh had to perform a full reload when a\\Maktabcha crm\\node_modules\\next\\dist\\client\\app-dir\\link.js","ids":["__esModule","default"]} changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/features/auth/login-form.tsx
+Error: 
+
+Caused by:
+    0: Failed to read source code from C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\src\features\auth\login-form.tsx
+    1: The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/features/auth/login-form.tsx
+./src/app/(auth)/login/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/features/auth/login-form.tsx
+Error: 
+
+Caused by:
+    0: Failed to read source code from C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\src\features\auth\login-form.tsx
+    1: The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/features/auth/login-form.tsx
+./src/app/(auth)/login/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(auth)\login\page.js:2:25068)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(auth)\login\page.js:2:25125) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/login'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(auth)\login\page.js:2:25068)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(auth)\login\page.js:2:25125) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/login'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js:2:8789)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js:2:8839) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js:2:8789)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js:2:8839) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\dashboard\page.js:2:27643)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\dashboard\page.js:2:27721) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/dashboard'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\dashboard\page.js:2:27643)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\dashboard\page.js:2:27721) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/dashboard'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js:2:8789)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js:2:8839) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js:2:8789)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js:2:8839) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\dashboard\page.js:2:27643)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\dashboard\page.js:2:27721) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/dashboard'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+Error: Cannot find module './965.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\dashboard\page.js:2:27643)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\dashboard\page.js:2:27721) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/dashboard'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  digest: '4050353434'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '263024849'
+}
+[TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/students'
+}
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  digest: '4050353434'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '263024849'
+}
+[TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/students'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '149274151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '149274151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '149274151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '149274151'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\students\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\students\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/students'
+}
+[TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/students'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\students\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\students\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '3078856151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  digest: '4050353434'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1127806392'
+}
+[TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/grades'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '149274151'
+}
+ ⨯ Error: Could not find the module "C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '149274151'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\students\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/grades'
+}
+ ⨯ Error: Cannot find module './611.js'
+Require stack:
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\webpack-runtime.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\app\(dashboard)\students\page.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\require.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\load-components.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\utils.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\options.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\swc\index.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\config.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\next.js
+- C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:325)
+    at Object.<anonymous> (C:\Users\DELL\Desktop\Ish reja\Maktabcha crm\.next\server\pages\_document.js:1:371) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[TypeError: Cannot read properties of undefined (reading '/_app')]
+ ⨯ [TypeError: Cannot read properties of undefined (reading '/_app')]
+[TypeError: Cannot read properties of undefined (reading '/_app')]

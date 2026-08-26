@@ -1,0 +1,111 @@
+
+> maktabcha-crm@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.24
+   - Local:        http://localhost:3000
+   - Network:      http://10.248.149.177:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 3.1s
+ ○ Compiling /login ...
+ ✓ Compiled /login in 3.6s (819 modules)
+ ✓ Compiled in 680ms (341 modules)
+ GET /login 200 in 120ms
+ GET /login 200 in 318ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1951ms (816 modules)
+ GET / 200 in 2326ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 4.9s (3321 modules)
+ GET /dashboard 200 in 5719ms
+ ○ Compiling /students ...
+ ✓ Compiled /students in 4.1s (3367 modules)
+ GET /students 200 in 4771ms
+ GET /login 200 in 146ms
+ ○ Compiling /attendance ...
+ ✓ Compiled /attendance in 1071ms (3389 modules)
+ GET /attendance 200 in 1239ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 1428ms (3392 modules)
+ GET /settings 200 in 1670ms
+ ✓ Compiled in 575ms (1592 modules)
+ ○ Compiling /_error ...
+ GET / 500 in 4530ms
+ GET / 500 in 2063ms
+ GET /dashboard 500 in 52ms
+ GET /dashboard 500 in 19ms
+ GET /dashboard 500 in 1896ms
+ GET / 500 in 1901ms
+ GET / 500 in 1032ms
+ GET /dashboard 500 in 1090ms
+ ✓ Compiled /_error in 3.6s (3751 modules)
+ GET /dashboard 200 in 625ms
+ GET / 200 in 5439ms
+ GET /dashboard 200 in 4879ms
+ ✓ Compiled in 1502ms (1755 modules)
+ GET /dashboard 200 in 153ms
+ GET / 200 in 154ms
+ ✓ Compiled in 1346ms (3751 modules)
+ GET /dashboard 200 in 652ms
+ GET / 200 in 687ms
+ GET /login 500 in 487ms
+ GET /login 500 in 111ms
+ ✓ Compiled in 3.4s (3755 modules)
+ GET / 500 in 457ms
+ GET / 500 in 208ms
+ GET /dashboard 500 in 641ms
+ GET /dashboard 500 in 108ms
+ GET / 500 in 401ms
+ GET / 500 in 90ms
+ GET /dashboard 500 in 579ms
+ GET /dashboard 500 in 113ms
+ ✓ Compiled in 2s (3755 modules)
+ GET /login 200 in 566ms
+ GET / 200 in 59ms
+ GET /dashboard 200 in 185ms
+ GET /dashboard 200 in 95ms
+ GET /dashboard 200 in 136ms
+ ○ Compiling /homework ...
+ ✓ Compiled /homework in 8.1s (3806 modules)
+ GET /students 200 in 8528ms
+ GET /attendance 200 in 9385ms
+ GET /groups 200 in 9415ms
+ GET /homework 200 in 10524ms
+ GET /lessons 200 in 10748ms
+ GET /dashboard 200 in 4309ms
+ ○ Compiling /reports ...
+ ✓ Compiled /reports in 6.8s (3868 modules)
+ GET /dashboard 200 in 5863ms
+ GET /dashboard 200 in 665ms
+ ✓ Compiled in 3.2s (3784 modules)
+ ✓ Compiled in 1499ms (3784 modules)
+ ✓ Compiled in 1299ms (3784 modules)
+ ✓ Compiled in 1521ms (3784 modules)
+ GET /login 200 in 279ms
+ GET / 200 in 46ms
+ GET /dashboard 200 in 374ms
+ GET /students 200 in 176ms
+ ○ Compiling /grades ...
+ ✓ Compiled /grades in 3s (2008 modules)
+ ✓ Compiled in 1ms (2051 modules)
+ ✓ Compiled in 1ms (2051 modules)
+ ✓ Compiled in 2ms (2051 modules)
+ GET /groups 200 in 7666ms
+ ✓ Compiled /payments in 1ms (2051 modules)
+ GET /lessons 200 in 9980ms
+ GET /homework 200 in 10010ms
+ GET /attendance 200 in 10012ms
+ GET /grades 200 in 9789ms
+ GET /students 200 in 6901ms
+ ✓ Compiled /debtors in 1ms (2058 modules)
+ ✓ Compiled (2090 modules)
+ GET /students 500 in 16400ms
+ GET /payments 200 in 20581ms
+ GET /reports 200 in 18230ms
+ GET /settings 200 in 18232ms
+ GET /debtors 200 in 18233ms
+ GET /grades 500 in 9802ms
+ GET /grades 500 in 152ms
+[?25h
