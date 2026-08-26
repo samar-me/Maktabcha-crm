@@ -2,10 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Student, Group, Payment, Attendance, Lesson, Grade, HomeworkSubmission, Homework } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
-import { PageHeader } from "@/components/shared/page-header";
+import { Student, Group, Payment, Attendance, Lesson, Grade, HomeworkSubmission } from "@/types/database";
+import { getStudentById, updateStudent } from "@/services/students";
+import { getGroups, getGroupsByStudentId, addStudentToGroup } from "@/services/groups";
+import { getPaymentsByStudentId } from "@/services/payments";
+import { getAttendance } from "@/services/attendance";
+import { getLessons } from "@/services/lessons";
+import { getGrades } from "@/services/grades";
+import { getHomeworkSubmissions } from "@/services/homework";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { StatCard } from "@/components/shared/stat-card";
@@ -26,11 +30,9 @@ import {
   CalendarCheck2,
   Award,
   FileCheck2,
-  Plus,
   AlertCircle,
-  CheckCircle2,
-  Clock,
   BookOpen,
+  Loader2,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -40,7 +42,6 @@ interface StudentProfileViewProps {
 }
 
 export function StudentProfileView({ studentId }: StudentProfileViewProps) {
-  const router = useRouter();
   const [student, setStudent] = React.useState<Student | null>(null);
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [allGroups, setAllGroups] = React.useState<Group[]>([]);
@@ -49,30 +50,57 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   const [lessons, setLessons] = React.useState<Lesson[]>([]);
   const [studentGrades, setStudentGrades] = React.useState<Grade[]>([]);
   const [studentSubmissions, setStudentSubmissions] = React.useState<HomeworkSubmission[]>([]);
-  const [allHomework, setAllHomework] = React.useState<Homework[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   const [formDialogOpen, setFormDialogOpen] = React.useState(false);
 
-  const loadStudentData = React.useCallback(() => {
-    const st = crmStore.getStudentById(studentId);
-    if (!st) {
-      setStudent(null);
-      return;
+  const loadStudentData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const st = await getStudentById(studentId);
+      if (!st) {
+        setStudent(null);
+        return;
+      }
+      setStudent(st);
+
+      const [stGroups, totalGroups, stPayments, stAtt, allLessons, stGrades, stSubs] =
+        await Promise.all([
+          getGroupsByStudentId(studentId),
+          getGroups(),
+          getPaymentsByStudentId(studentId),
+          getAttendance({ studentId }),
+          getLessons(),
+          getGrades({ studentId }),
+          getHomeworkSubmissions({ studentId }),
+        ]);
+
+      setGroups(stGroups);
+      setAllGroups(totalGroups);
+      setPayments(stPayments);
+      setAttendanceRecords(stAtt);
+      setLessons(allLessons);
+      setStudentGrades(stGrades);
+      setStudentSubmissions(stSubs);
+    } catch {
+      toast.error("O‘quvchi ma'lumotlarini yuklashda xatolik");
+    } finally {
+      setLoading(false);
     }
-    setStudent(st);
-    setGroups(crmStore.getGroupsByStudentId(studentId));
-    setAllGroups(crmStore.getGroups());
-    setPayments(crmStore.getPaymentsByStudentId(studentId));
-    setAttendanceRecords(crmStore.getAttendance(undefined, undefined, studentId));
-    setLessons(crmStore.getLessons());
-    setStudentGrades(crmStore.getGrades(undefined, studentId));
-    setStudentSubmissions(crmStore.getHomeworkSubmissions(undefined, studentId));
-    setAllHomework(crmStore.getHomework());
   }, [studentId]);
 
   React.useEffect(() => {
     loadStudentData();
   }, [loadStudentData]);
+
+  if (loading) {
+    return (
+      <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        <p className="text-xs">O‘quvchi profili yuklanmoqda...</p>
+      </div>
+    );
+  }
 
   if (!student) {
     return (
@@ -102,15 +130,27 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   const totalPaid = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
   const currentDebt = Math.max(0, totalMonthlyFee - totalPaid);
 
-  // Live Stats from Store
-  const attStats = crmStore.getStudentAttendanceStats(student.id);
-  const hwStats = crmStore.getStudentHomeworkStats(student.id);
-  const grStats = crmStore.getStudentGradeStats(student.id);
+  // Live Academic Stats
+  const presentCount = attendanceRecords.filter((a) => a.status === "Keldi").length;
+  const attendanceRate =
+    attendanceRecords.length > 0
+      ? Math.round((presentCount / attendanceRecords.length) * 100)
+      : 100;
+
+  const totalGradeScore = studentGrades.reduce((acc, g) => acc + Number(g.score), 0);
+  const totalGradeMax = studentGrades.reduce((acc, g) => acc + Number(g.max_score || 100), 0);
+  const gradePercent =
+    totalGradeMax > 0 ? Math.round((totalGradeScore / totalGradeMax) * 100) : 100;
+
+  const completedHw = studentSubmissions.filter((s) => s.status === "Bajarildi").length;
+  const homeworkRate =
+    studentSubmissions.length > 0
+      ? Math.round((completedHw / studentSubmissions.length) * 100)
+      : 100;
 
   const handleUpdateStudent = async (values: StudentFormValues) => {
     try {
-      crmStore.saveStudent({
-        id: student.id,
+      await updateStudent(student.id, {
         first_name: values.first_name,
         last_name: values.last_name || null,
         phone: values.phone || null,
@@ -119,18 +159,16 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         birth_date: values.birth_date || null,
         gender: values.gender || "Erkak",
         address: values.address || null,
-        joined_at: student.joined_at,
         status: values.status,
         notes: values.notes || null,
-        avatar_url: student.avatar_url,
       });
 
       if (values.group_id) {
-        crmStore.addStudentToGroup(values.group_id, student.id);
+        await addStudentToGroup(values.group_id, student.id);
       }
 
       toast.success("O‘quvchi ma'lumotlari yangilandi");
-      loadStudentData();
+      await loadStudentData();
     } catch {
       toast.error("O‘quvchini yangilashda xatolik");
     }
@@ -213,25 +251,25 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Davomat ko‘rsatkichi"
-          value={`${attStats.rate}%`}
+          value={`${attendanceRate}%`}
           icon={CalendarCheck2}
-          subtitle={`Jami ${attStats.total} darsdan ${attStats.present} tasiga kelgan`}
+          subtitle={`Jami ${attendanceRecords.length} darsdan ${presentCount} tasiga kelgan`}
           iconColorClass="text-emerald-600 dark:text-emerald-400"
           iconBgClass="bg-emerald-50 dark:bg-emerald-950/50"
         />
         <StatCard
           title="O‘rtacha bahosi"
-          value={grStats.total > 0 ? `${grStats.averagePercent}%` : "100%"}
+          value={`${gradePercent}%`}
           icon={Award}
-          subtitle={grStats.total > 0 ? `${grStats.total} ta sinov natijalari` : "Hozircha baholanmagan"}
+          subtitle={studentGrades.length > 0 ? `${studentGrades.length} ta sinov natijalari` : "Hozircha baholanmagan"}
           iconColorClass="text-blue-600 dark:text-blue-400"
           iconBgClass="bg-blue-50 dark:bg-blue-950/50"
         />
         <StatCard
           title="Vazifalar bajarilishi"
-          value={`${hwStats.rate}%`}
+          value={`${homeworkRate}%`}
           icon={FileCheck2}
-          subtitle={`${hwStats.completed} ta vazifa to‘liq bajarilgan`}
+          subtitle={`${completedHw} ta vazifa to‘liq bajarilgan`}
           iconColorClass="text-indigo-600 dark:text-indigo-400"
           iconBgClass="bg-indigo-50 dark:bg-indigo-950/50"
         />
@@ -454,7 +492,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
                         <div key={att.id} className="p-3 flex items-center justify-between text-xs hover:bg-muted/15">
                           <div>
                             <span className="font-semibold text-foreground block">
-                              {formatDate(att.date)} {lesson ? `&bull; ${lesson.topic}` : ""}
+                              {formatDate(att.date)} {lesson ? `• ${lesson.topic}` : ""}
                             </span>
                             {att.note && <span className="text-[11px] text-muted-foreground">{att.note}</span>}
                           </div>

@@ -3,25 +3,22 @@
 import * as React from "react";
 import Link from "next/link";
 import { Lesson, Group, Student, Attendance } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
-import { PageHeader } from "@/components/shared/page-header";
+import { getLessonById } from "@/services/lessons";
+import { getGroupById, getStudentsByGroupId } from "@/services/groups";
+import { getAttendance } from "@/services/attendance";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { StatCard } from "@/components/shared/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   ArrowLeft,
   CalendarCheck2,
-  CheckCircle2,
-  Clock,
-  Calendar,
   FileCheck2,
-  Award,
   BookOpen,
-  Edit,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
+import { toast } from "sonner";
 
 interface LessonDetailViewProps {
   lessonId: string;
@@ -32,16 +29,45 @@ export function LessonDetailView({ lessonId }: LessonDetailViewProps) {
   const [group, setGroup] = React.useState<Group | null>(null);
   const [students, setStudents] = React.useState<Student[]>([]);
   const [attendance, setAttendance] = React.useState<Attendance[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const ls = crmStore.getLessonById(lessonId);
-    if (!ls) return;
-    setLesson(ls);
-    const grp = crmStore.getGroupById(ls.group_id);
-    setGroup(grp || null);
-    setStudents(crmStore.getStudentsByGroupId(ls.group_id));
-    setAttendance(crmStore.getAttendance(ls.id));
+    async function loadData() {
+      try {
+        setLoading(true);
+        const ls = await getLessonById(lessonId);
+        if (!ls) {
+          setLesson(null);
+          return;
+        }
+        setLesson(ls);
+
+        const [grp, grpStudents, att] = await Promise.all([
+          getGroupById(ls.group_id),
+          getStudentsByGroupId(ls.group_id),
+          getAttendance({ lessonId: ls.id }),
+        ]);
+
+        setGroup(grp);
+        setStudents(grpStudents);
+        setAttendance(att);
+      } catch {
+        toast.error("Dars ma'lumotlarini yuklashda xatolik");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
   }, [lessonId]);
+
+  if (loading) {
+    return (
+      <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        <p className="text-xs">Dars ma'lumotlari yuklanmoqda...</p>
+      </div>
+    );
+  }
 
   if (!lesson) {
     return (
@@ -132,7 +158,7 @@ export function LessonDetailView({ lessonId }: LessonDetailViewProps) {
                   <tr>
                     <th className="px-6 py-3 font-semibold">O‘quvchi</th>
                     <th className="px-4 py-3 font-semibold">Holati</th>
-                    <th className="px-6 py-3 font-semibold text-right">Izoh</th>
+                    <th className="px-6 py-3 text-right font-semibold">Izoh</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">

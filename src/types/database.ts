@@ -21,7 +21,7 @@ export interface ScheduleItem {
   end_time: string; // e.g. "09:00"
 }
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -51,6 +51,7 @@ export interface Database {
           avatar_url?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       students: {
         Row: {
@@ -103,6 +104,7 @@ export interface Database {
           avatar_url?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       groups: {
         Row: {
@@ -110,11 +112,14 @@ export interface Database {
           name: string;
           course_name: string;
           teacher_name: string;
+          teacher_phone: string | null;
           monthly_fee: number;
           room: string | null;
+          schedule: ScheduleItem[];
           start_date: string;
+          end_date: string | null;
           status: GroupStatus;
-          schedule: ScheduleItem[] | Json;
+          description: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -123,11 +128,14 @@ export interface Database {
           name: string;
           course_name: string;
           teacher_name: string;
+          teacher_phone?: string | null;
           monthly_fee?: number;
           room?: string | null;
+          schedule?: ScheduleItem[];
           start_date?: string;
+          end_date?: string | null;
           status?: GroupStatus;
-          schedule?: ScheduleItem[] | Json;
+          description?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -136,13 +144,17 @@ export interface Database {
           name?: string;
           course_name?: string;
           teacher_name?: string;
+          teacher_phone?: string | null;
           monthly_fee?: number;
           room?: string | null;
+          schedule?: ScheduleItem[];
           start_date?: string;
+          end_date?: string | null;
           status?: GroupStatus;
-          schedule?: ScheduleItem[] | Json;
+          description?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       group_students: {
         Row: {
@@ -168,6 +180,7 @@ export interface Database {
           joined_at?: string;
           status?: GroupStudentStatus;
         };
+        Relationships: [];
       };
       lessons: {
         Row: {
@@ -208,6 +221,7 @@ export interface Database {
           status?: LessonStatus;
           updated_at?: string;
         };
+        Relationships: [];
       };
       attendance: {
         Row: {
@@ -242,6 +256,7 @@ export interface Database {
           note?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       homework: {
         Row: {
@@ -276,6 +291,7 @@ export interface Database {
           due_date?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       homework_submissions: {
         Row: {
@@ -285,6 +301,7 @@ export interface Database {
           status: HomeworkStatus;
           score: number | null;
           feedback: string | null;
+          submitted_at: string;
           created_at: string;
           updated_at: string;
         };
@@ -295,6 +312,7 @@ export interface Database {
           status?: HomeworkStatus;
           score?: number | null;
           feedback?: string | null;
+          submitted_at?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -305,8 +323,10 @@ export interface Database {
           status?: HomeworkStatus;
           score?: number | null;
           feedback?: string | null;
+          submitted_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       grades: {
         Row: {
@@ -347,6 +367,7 @@ export interface Database {
           notes?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       payments: {
         Row: {
@@ -387,6 +408,7 @@ export interface Database {
           note?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       settings: {
         Row: {
@@ -424,10 +446,23 @@ export interface Database {
           address?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
-}
+};
 
 // Convenience Type aliases for application domain
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -441,3 +476,22 @@ export type HomeworkSubmission = Database["public"]["Tables"]["homework_submissi
 export type Grade = Database["public"]["Tables"]["grades"]["Row"];
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type SystemSettings = Database["public"]["Tables"]["settings"]["Row"];
+
+export type StudentInsert = Database["public"]["Tables"]["students"]["Insert"];
+export type StudentUpdate = Database["public"]["Tables"]["students"]["Update"];
+export type GroupInsert = Database["public"]["Tables"]["groups"]["Insert"];
+export type GroupUpdate = Database["public"]["Tables"]["groups"]["Update"];
+export type LessonInsert = Database["public"]["Tables"]["lessons"]["Insert"];
+export type LessonUpdate = Database["public"]["Tables"]["lessons"]["Update"];
+export type AttendanceInsert = Database["public"]["Tables"]["attendance"]["Insert"];
+export type AttendanceUpdate = Database["public"]["Tables"]["attendance"]["Update"];
+export type HomeworkInsert = Database["public"]["Tables"]["homework"]["Insert"];
+export type HomeworkUpdate = Database["public"]["Tables"]["homework"]["Update"];
+export type HomeworkSubmissionInsert = Database["public"]["Tables"]["homework_submissions"]["Insert"];
+export type HomeworkSubmissionUpdate = Database["public"]["Tables"]["homework_submissions"]["Update"];
+export type GradeInsert = Database["public"]["Tables"]["grades"]["Insert"];
+export type GradeUpdate = Database["public"]["Tables"]["grades"]["Update"];
+export type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
+export type PaymentUpdate = Database["public"]["Tables"]["payments"]["Update"];
+export type SettingsInsert = Database["public"]["Tables"]["settings"]["Insert"];
+export type SettingsUpdate = Database["public"]["Tables"]["settings"]["Update"];

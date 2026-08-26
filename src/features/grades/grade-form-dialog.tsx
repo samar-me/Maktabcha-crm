@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { gradeSchema, GradeFormValues } from "./grade-schema";
 import { Grade, Group, Student, Lesson } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { getStudentsByGroupId } from "@/services/groups";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +50,7 @@ export function GradeFormDialog({
 }: GradeFormDialogProps) {
   const isEditing = !!grade;
   const [loading, setLoading] = React.useState(false);
+  const [groupStudents, setGroupStudents] = React.useState<Student[]>([]);
 
   const {
     register,
@@ -78,10 +79,20 @@ export function GradeFormDialog({
   const currentMaxScore = Number(watch("max_score")) || 100;
   const percentage = currentMaxScore > 0 ? Math.round((currentScore / currentMaxScore) * 100) : 0;
 
-  // Filter students by selected group if available
-  const availableStudents = React.useMemo(() => {
-    if (!selectedGroupId) return students;
-    return crmStore.getStudentsByGroupId(selectedGroupId);
+  React.useEffect(() => {
+    async function updateStudents() {
+      if (!selectedGroupId) {
+        setGroupStudents(students);
+        return;
+      }
+      try {
+        const grpSt = await getStudentsByGroupId(selectedGroupId);
+        setGroupStudents(grpSt.length > 0 ? grpSt : students);
+      } catch {
+        setGroupStudents(students);
+      }
+    }
+    updateStudents();
   }, [selectedGroupId, students]);
 
   React.useEffect(() => {
@@ -98,7 +109,7 @@ export function GradeFormDialog({
       });
     } else {
       reset({
-        student_id: initialStudentId || (availableStudents[0]?.id || ""),
+        student_id: initialStudentId || (students[0]?.id || ""),
         group_id: initialGroupId || (groups[0]?.id || ""),
         lesson_id: "",
         title: "Oraliq nazorat",
@@ -108,7 +119,7 @@ export function GradeFormDialog({
         notes: "",
       });
     }
-  }, [grade, initialGroupId, initialStudentId, groups, availableStudents, reset, open]);
+  }, [grade, initialGroupId, initialStudentId, groups, students, reset, open]);
 
   const onSubmit = async (values: GradeFormValues) => {
     setLoading(true);
@@ -141,12 +152,14 @@ export function GradeFormDialog({
               </Label>
               <Select
                 value={selectedGroupId}
-                onValueChange={(val) => {
+                onValueChange={async (val) => {
                   setValue("group_id", val);
-                  const grpSt = crmStore.getStudentsByGroupId(val);
-                  if (grpSt.length > 0) {
-                    setValue("student_id", grpSt[0].id);
-                  }
+                  try {
+                    const grpSt = await getStudentsByGroupId(val);
+                    if (grpSt.length > 0) {
+                      setValue("student_id", grpSt[0].id);
+                    }
+                  } catch {}
                 }}
               >
                 <SelectTrigger>
@@ -174,7 +187,7 @@ export function GradeFormDialog({
                   <SelectValue placeholder="O‘quvchini tanlang" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableStudents.map((st) => (
+                  {groupStudents.map((st) => (
                     <SelectItem key={st.id} value={st.id}>
                       {st.first_name} {st.last_name || ""}
                     </SelectItem>

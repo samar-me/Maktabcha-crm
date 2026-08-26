@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import { Payment, Group, Student } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { getPayments, createPayment, updatePayment, deletePayment } from "@/services/payments";
+import { getGroups } from "@/services/groups";
+import { getStudents } from "@/services/students";
+import { getMonthlyFinancialSummary, MonthlyFinancialSummary } from "@/services/reports";
 import { PaymentFormDialog } from "./payment-form-dialog";
 import { PaymentReceiptDialog } from "./payment-receipt-dialog";
 import { PaymentFormValues } from "./payment-schema";
@@ -13,7 +16,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { excelExport } from "@/lib/excel-export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,9 +35,9 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Calendar,
   Wallet,
   FileSpreadsheet,
+  Loader2,
 } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -43,6 +46,15 @@ export function PaymentListView() {
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [students, setStudents] = React.useState<Student[]>([]);
+  const [summary, setSummary] = React.useState<MonthlyFinancialSummary>({
+    totalExpected: 0,
+    totalCollected: 0,
+    totalDebt: 0,
+    collectionRate: 0,
+    debtorsCount: 0,
+  });
+  const [loading, setLoading] = React.useState(true);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [groupFilter, setGroupFilter] = React.useState<string>("all");
   const [methodFilter, setMethodFilter] = React.useState<string>("all");
@@ -56,10 +68,24 @@ export function PaymentListView() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [paymentToDelete, setPaymentToDelete] = React.useState<Payment | null>(null);
 
-  const loadData = React.useCallback(() => {
-    setPayments(crmStore.getPayments());
-    setGroups(crmStore.getGroups());
-    setStudents(crmStore.getStudents());
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [pmtList, grpList, stList, summ] = await Promise.all([
+        getPayments(),
+        getGroups(),
+        getStudents(),
+        getMonthlyFinancialSummary(),
+      ]);
+      setPayments(pmtList);
+      setGroups(grpList);
+      setStudents(stList);
+      setSummary(summ);
+    } catch {
+      toast.error("To‘lovlarni yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -86,33 +112,46 @@ export function PaymentListView() {
 
   const handleSavePayment = async (values: PaymentFormValues, id?: string) => {
     try {
-      crmStore.savePayment({
-        id,
-        student_id: values.student_id,
-        group_id: values.group_id,
-        amount: values.amount,
-        payment_date: values.payment_date,
-        payment_method: values.payment_method,
-        month: values.month,
-        year: values.year,
-        note: values.note || null,
-      });
+      if (id) {
+        await updatePayment(id, {
+          student_id: values.student_id,
+          group_id: values.group_id,
+          amount: values.amount,
+          payment_date: values.payment_date,
+          payment_method: values.payment_method,
+          month: values.month,
+          year: values.year,
+          note: values.note || null,
+        });
+        toast.success("To‘lov ma'lumotlari yangilandi");
+      } else {
+        await createPayment({
+          student_id: values.student_id,
+          group_id: values.group_id,
+          amount: values.amount,
+          payment_date: values.payment_date,
+          payment_method: values.payment_method,
+          month: values.month,
+          year: values.year,
+          note: values.note || null,
+        });
+        toast.success("To‘lov qabul qilindi");
+      }
 
-      toast.success(id ? "To‘lov ma'lumotlari yangilandi" : "To‘lov qabul qilindi");
-      loadData();
+      await loadData();
     } catch {
       toast.error("To‘lovni saqlashda xatolik yuz berdi");
     }
   };
 
-  const handleDeletePayment = () => {
+  const handleDeletePayment = async () => {
     if (!paymentToDelete) return;
     try {
-      crmStore.deletePayment(paymentToDelete.id);
+      await deletePayment(paymentToDelete.id);
       toast.success("To‘lov o‘chirildi");
       setDeleteConfirmOpen(false);
       setPaymentToDelete(null);
-      loadData();
+      await loadData();
     } catch {
       toast.error("O‘chirishda xatolik");
     }
@@ -132,8 +171,6 @@ export function PaymentListView() {
     toast.success("To‘lovlar hisoboti Excel (.xlsx) fayliga yuklandi!");
   };
 
-  // Financial summary
-  const summary = crmStore.getMonthlyFinancialSummary();
   const totalAmountFiltered = filteredPayments.reduce((acc, p) => acc + Number(p.amount), 0);
 
   const monthNames = [
@@ -247,7 +284,12 @@ export function PaymentListView() {
       </div>
 
       {/* Table */}
-      {filteredPayments.length === 0 ? (
+      {loading ? (
+        <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">To‘lovlar yuklanmoqda...</p>
+        </div>
+      ) : filteredPayments.length === 0 ? (
         <EmptyState
           icon={CreditCard}
           title="To‘lovlar topilmadi"

@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Grade, Group, Student } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { Grade, Group, Student, Lesson } from "@/types/database";
+import { getGrades, saveGrade, deleteGrade } from "@/services/grades";
+import { getGroups } from "@/services/groups";
+import { getStudents } from "@/services/students";
+import { getLessons } from "@/services/lessons";
 import { GradeFormDialog } from "./grade-form-dialog";
 import { GradeFormValues } from "./grade-schema";
 import { StatCard } from "@/components/shared/stat-card";
@@ -10,7 +13,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,11 +27,11 @@ import {
   Award,
   TrendingUp,
   CheckCircle2,
-  AlertCircle,
   MoreVertical,
   Edit,
   Trash2,
   Calendar,
+  Loader2,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -37,6 +40,9 @@ export function GradeListView() {
   const [grades, setGrades] = React.useState<Grade[]>([]);
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [students, setStudents] = React.useState<Student[]>([]);
+  const [lessons, setLessons] = React.useState<Lesson[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [groupFilter, setGroupFilter] = React.useState<string>("all");
 
@@ -46,10 +52,24 @@ export function GradeListView() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [gradeToDelete, setGradeToDelete] = React.useState<Grade | null>(null);
 
-  const loadData = React.useCallback(() => {
-    setGrades(crmStore.getGrades());
-    setGroups(crmStore.getGroups());
-    setStudents(crmStore.getStudents());
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [grdList, grpList, stList, lsList] = await Promise.all([
+        getGrades(),
+        getGroups(),
+        getStudents(),
+        getLessons(),
+      ]);
+      setGrades(grdList);
+      setGroups(grpList);
+      setStudents(stList);
+      setLessons(lsList);
+    } catch {
+      toast.error("Baholarni yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -76,7 +96,7 @@ export function GradeListView() {
 
   const handleSaveGrade = async (values: GradeFormValues, id?: string) => {
     try {
-      crmStore.saveGrade({
+      await saveGrade({
         id,
         student_id: values.student_id,
         group_id: values.group_id,
@@ -89,20 +109,20 @@ export function GradeListView() {
       });
 
       toast.success(id ? "Baho yangilandi" : "Yangi baho kiritildi");
-      loadData();
+      await loadData();
     } catch {
       toast.error("Bahoni saqlashda xatolik yuz berdi");
     }
   };
 
-  const handleDeleteGrade = () => {
+  const handleDeleteGrade = async () => {
     if (!gradeToDelete) return;
     try {
-      crmStore.deleteGrade(gradeToDelete.id);
+      await deleteGrade(gradeToDelete.id);
       toast.success("Baho tizimdan o‘chirildi");
       setDeleteConfirmOpen(false);
       setGradeToDelete(null);
-      loadData();
+      await loadData();
     } catch {
       toast.error("O‘chirishda xatolik");
     }
@@ -207,7 +227,12 @@ export function GradeListView() {
       </div>
 
       {/* Grades Table */}
-      {filteredGrades.length === 0 ? (
+      {loading ? (
+        <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">Baholar yuklanmoqda...</p>
+        </div>
+      ) : filteredGrades.length === 0 ? (
         <EmptyState
           icon={Award}
           title="Baholar topilmadi"
@@ -355,7 +380,7 @@ export function GradeListView() {
         grade={editingGrade}
         groups={groups}
         students={students}
-        lessons={[]}
+        lessons={lessons}
         onSave={handleSaveGrade}
       />
 

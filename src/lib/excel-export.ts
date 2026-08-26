@@ -1,7 +1,7 @@
 import * as XLSX from "xlsx";
 import { Student, Group, Payment, Attendance, Lesson } from "@/types/database";
-import { DebtorInfo } from "@/services/crm-store";
-import { formatDate, formatCurrency } from "./formatters";
+import { DebtorInfo } from "@/services/debtors";
+import { formatDate } from "./formatters";
 
 export const excelExport = {
   /**
@@ -9,11 +9,6 @@ export const excelExport = {
    */
   exportStudents(students: Student[], groups: Group[]) {
     const data = students.map((st, idx) => {
-      const studentGroups = groups.filter((g) => {
-        // match groups
-        return true;
-      });
-
       return {
         "№": idx + 1,
         "Ismi": st.first_name,
@@ -115,10 +110,11 @@ export const excelExport = {
         "O‘quvchi telefoni": d.student.phone || "—",
         "Ota-onasi": d.student.parent_name || "—",
         "Ota-onasi telefoni": d.student.parent_phone || "—",
-        "Guruhlari": d.groups.map((g) => g.name).join(", "),
+        "Guruh": d.group.name,
+        "Oylik tarif (so‘m)": d.monthlyFee,
+        "To‘langan (so‘m)": d.paidAmount,
         "Qarz summasi (so‘m)": d.debtAmount,
-        "To‘lanmagan oylar": d.unpaidMonths.join(", ") || "Joriy oy",
-        "Oxirgi to‘lov sanasi": d.lastPaymentDate ? formatDate(d.lastPaymentDate) : "To‘lov bo‘lmagan",
+        "To‘lov davri": `${d.month}-oy, ${d.year}`,
       };
     });
 
@@ -133,6 +129,7 @@ export const excelExport = {
       { wch: 20 },
       { wch: 18 },
       { wch: 20 },
+      { wch: 18 },
       { wch: 18 },
       { wch: 20 },
       { wch: 20 },

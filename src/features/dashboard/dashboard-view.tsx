@@ -9,7 +9,13 @@ import {
   Lesson,
   Attendance,
 } from "@/types/database";
-import { crmStore, DebtorInfo } from "@/services/crm-store";
+import { getStudents } from "@/services/students";
+import { getGroups } from "@/services/groups";
+import { getPayments, createPayment } from "@/services/payments";
+import { getLessons } from "@/services/lessons";
+import { getAttendance } from "@/services/attendance";
+import { getDebtors, DebtorInfo } from "@/services/debtors";
+import { getMonthlyFinancialSummary, MonthlyFinancialSummary } from "@/services/reports";
 import { StatCard } from "@/components/shared/stat-card";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -24,17 +30,14 @@ import {
   CalendarCheck2,
   Wallet,
   ShieldAlert,
-  TrendingUp,
   Plus,
-  BookOpen,
   CreditCard,
   Calendar,
   Clock,
-  ArrowRight,
   Phone,
   Receipt,
   CheckCircle2,
-  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import {
@@ -56,7 +59,16 @@ export function DashboardView() {
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [lessons, setLessons] = React.useState<Lesson[]>([]);
+  const [attendance, setAttendance] = React.useState<Attendance[]>([]);
   const [debtors, setDebtors] = React.useState<DebtorInfo[]>([]);
+  const [summary, setSummary] = React.useState<MonthlyFinancialSummary>({
+    totalExpected: 0,
+    totalCollected: 0,
+    totalDebt: 0,
+    collectionRate: 0,
+    debtorsCount: 0,
+  });
+  const [loading, setLoading] = React.useState(true);
 
   const [paymentDialogOpen, setPaymentDialogOpen] = React.useState(false);
   const [selectedStudentForPayment, setSelectedStudentForPayment] = React.useState<Student | null>(null);
@@ -64,20 +76,36 @@ export function DashboardView() {
   const [receiptDialogOpen, setReceiptDialogOpen] = React.useState(false);
   const [selectedPaymentForReceipt, setSelectedPaymentForReceipt] = React.useState<Payment | null>(null);
 
-  const loadData = React.useCallback(() => {
-    setStudents(crmStore.getStudents());
-    setGroups(crmStore.getGroups());
-    setPayments(crmStore.getPayments());
-    setLessons(crmStore.getLessons());
-    setDebtors(crmStore.getDebtors());
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [stList, grList, pmtList, lsList, attList, dList, summ] = await Promise.all([
+        getStudents(),
+        getGroups(),
+        getPayments(),
+        getLessons(),
+        getAttendance(),
+        getDebtors(),
+        getMonthlyFinancialSummary(),
+      ]);
+      setStudents(stList);
+      setGroups(grList);
+      setPayments(pmtList);
+      setLessons(lsList);
+      setAttendance(attList);
+      setDebtors(dList);
+      setSummary(summ);
+    } catch {
+      toast.error("Dashboard ma'lumotlarini yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Financial summary
-  const summary = crmStore.getMonthlyFinancialSummary();
   const activeStudents = students.filter((s) => s.status === "Faol");
   const activeGroups = groups.filter((g) => g.status === "Faol");
 
@@ -87,10 +115,9 @@ export function DashboardView() {
   const recentOrUpcomingLessons = lessons.slice(0, 4);
 
   // Overall attendance rate
-  const allAttendance = crmStore.getAttendance();
-  const presentCount = allAttendance.filter((a) => a.status === "Keldi").length;
+  const presentCount = attendance.filter((a) => a.status === "Keldi").length;
   const overallAttendanceRate =
-    allAttendance.length > 0 ? Math.round((presentCount / allAttendance.length) * 100) : 100;
+    attendance.length > 0 ? Math.round((presentCount / attendance.length) * 100) : 100;
 
   // Chart data: Monthly Revenue
   const revenueChartData = [
@@ -105,7 +132,7 @@ export function DashboardView() {
     { dars: "Dars #1", davomat: 100 },
     { dars: "Dars #2", davomat: 100 },
     { dars: "Dars #3", davomat: 95 },
-    { dars: "Dars #4", davomat: 100 },
+    { dars: "Dars #4", davomat: overallAttendanceRate },
   ];
 
   const handleOpenPayment = (student: Student) => {
@@ -115,7 +142,7 @@ export function DashboardView() {
 
   const handleSavePayment = async (values: PaymentFormValues) => {
     try {
-      crmStore.savePayment({
+      await createPayment({
         student_id: values.student_id,
         group_id: values.group_id,
         amount: values.amount,
@@ -127,7 +154,7 @@ export function DashboardView() {
       });
 
       toast.success("To‘lov qabul qilindi!");
-      loadData();
+      await loadData();
     } catch {
       toast.error("Xatolik yuz berdi");
     }
@@ -171,61 +198,68 @@ export function DashboardView() {
       </div>
 
       {/* 6 Metric Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
-        <StatCard
-          title="Faol o‘quvchilar"
-          value={`${activeStudents.length} nafar`}
-          icon={Users}
-          subtitle="Jami ta'lim olayotganlar"
-          iconColorClass="text-blue-600 dark:text-blue-400"
-          iconBgClass="bg-blue-50 dark:bg-blue-950/50"
-        />
+      {loading ? (
+        <div className="p-8 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">Statistika yuklanmoqda...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+          <StatCard
+            title="Faol o‘quvchilar"
+            value={`${activeStudents.length} nafar`}
+            icon={Users}
+            subtitle="Jami ta'lim olayotganlar"
+            iconColorClass="text-blue-600 dark:text-blue-400"
+            iconBgClass="bg-blue-50 dark:bg-blue-950/50"
+          />
 
-        <StatCard
-          title="Faol guruhlar"
-          value={`${activeGroups.length} ta`}
-          icon={GraduationCap}
-          subtitle="Muntazam dars guruhlari"
-          iconColorClass="text-purple-600 dark:text-purple-400"
-          iconBgClass="bg-purple-50 dark:bg-purple-950/50"
-        />
+          <StatCard
+            title="Faol guruhlar"
+            value={`${activeGroups.length} ta`}
+            icon={GraduationCap}
+            subtitle="Muntazam dars guruhlari"
+            iconColorClass="text-purple-600 dark:text-purple-400"
+            iconBgClass="bg-purple-50 dark:bg-purple-950/50"
+          />
 
-        <StatCard
-          title="Bugungi darslar"
-          value={`${todayLessons.length > 0 ? todayLessons.length : lessons.length} ta`}
-          icon={Calendar}
-          subtitle="Rejalashtirilgan mashg‘ulot"
-          iconColorClass="text-indigo-600 dark:text-indigo-400"
-          iconBgClass="bg-indigo-50 dark:bg-indigo-950/50"
-        />
+          <StatCard
+            title="Bugungi darslar"
+            value={`${todayLessons.length > 0 ? todayLessons.length : lessons.length} ta`}
+            icon={Calendar}
+            subtitle="Rejalashtirilgan mashg‘ulot"
+            iconColorClass="text-indigo-600 dark:text-indigo-400"
+            iconBgClass="bg-indigo-50 dark:bg-indigo-950/50"
+          />
 
-        <StatCard
-          title="Bu oylik tushum"
-          value={<MoneyDisplay amount={summary.totalCollected} size="md" variant="positive" />}
-          icon={Wallet}
-          subtitle={`Yig‘ish foizi: ${summary.collectionRate}%`}
-          iconColorClass="text-emerald-600 dark:text-emerald-400"
-          iconBgClass="bg-emerald-50 dark:bg-emerald-950/50"
-        />
+          <StatCard
+            title="Bu oylik tushum"
+            value={<MoneyDisplay amount={summary.totalCollected} size="md" variant="positive" />}
+            icon={Wallet}
+            subtitle={`Yig‘ish foizi: ${summary.collectionRate}%`}
+            iconColorClass="text-emerald-600 dark:text-emerald-400"
+            iconBgClass="bg-emerald-50 dark:bg-emerald-950/50"
+          />
 
-        <StatCard
-          title="Jami qarzdorlik"
-          value={<MoneyDisplay amount={summary.totalDebt} size="md" variant="negative" />}
-          icon={ShieldAlert}
-          subtitle={`${summary.debtorsCount} nafar qarzdor`}
-          iconColorClass="text-rose-600 dark:text-rose-400"
-          iconBgClass="bg-rose-50 dark:bg-rose-950/50"
-        />
+          <StatCard
+            title="Jami qarzdorlik"
+            value={<MoneyDisplay amount={summary.totalDebt} size="md" variant="negative" />}
+            icon={ShieldAlert}
+            subtitle={`${summary.debtorsCount} nafar qarzdor`}
+            iconColorClass="text-rose-600 dark:text-rose-400"
+            iconBgClass="bg-rose-50 dark:bg-rose-950/50"
+          />
 
-        <StatCard
-          title="O‘rtacha davomat"
-          value={`${overallAttendanceRate}%`}
-          icon={CalendarCheck2}
-          subtitle="Barcha darslar bo‘yicha"
-          iconColorClass="text-teal-600 dark:text-teal-400"
-          iconBgClass="bg-teal-50 dark:bg-teal-950/50"
-        />
-      </div>
+          <StatCard
+            title="O‘rtacha davomat"
+            value={`${overallAttendanceRate}%`}
+            icon={CalendarCheck2}
+            subtitle="Barcha darslar bo‘yicha"
+            iconColorClass="text-teal-600 dark:text-teal-400"
+            iconBgClass="bg-teal-50 dark:bg-teal-950/50"
+          />
+        </div>
+      )}
 
       {/* Charts Section: Revenue & Attendance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -419,7 +453,7 @@ export function DashboardView() {
               </div>
             ) : (
               debtors.slice(0, 4).map((d) => (
-                <div key={d.student.id} className="p-3.5 hover:bg-muted/15 transition-colors space-y-1.5">
+                <div key={`${d.student.id}_${d.group.id}`} className="p-3.5 hover:bg-muted/15 transition-colors space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Link
                       href={`/students/${d.student.id}`}

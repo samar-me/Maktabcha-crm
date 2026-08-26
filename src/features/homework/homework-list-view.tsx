@@ -1,12 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { Homework, Group, Lesson, Student } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { Homework, Group, Lesson, Student, HomeworkSubmission, GroupStudent } from "@/types/database";
+import {
+  getHomeworkList,
+  createHomework,
+  updateHomework,
+  deleteHomework,
+  getHomeworkSubmissions,
+} from "@/services/homework";
+import { getGroups, getGroupStudents, getStudentsByGroupId } from "@/services/groups";
+import { getLessons } from "@/services/lessons";
 import { HomeworkFormDialog } from "./homework-form-dialog";
 import { HomeworkGradingDialog } from "./homework-grading-dialog";
 import { HomeworkFormValues } from "./homework-schema";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -23,13 +30,12 @@ import {
   Plus,
   Search,
   FileCheck2,
-  Calendar,
   Clock,
-  CheckCircle2,
   MoreVertical,
   Edit,
   Trash2,
   CheckSquare,
+  Loader2,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -38,6 +44,10 @@ export function HomeworkListView() {
   const [homeworkList, setHomeworkList] = React.useState<Homework[]>([]);
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [lessons, setLessons] = React.useState<Lesson[]>([]);
+  const [enrollments, setEnrollments] = React.useState<GroupStudent[]>([]);
+  const [submissions, setSubmissions] = React.useState<HomeworkSubmission[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [groupFilter, setGroupFilter] = React.useState<string>("all");
 
@@ -51,15 +61,53 @@ export function HomeworkListView() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [homeworkToDelete, setHomeworkToDelete] = React.useState<Homework | null>(null);
 
-  const loadData = React.useCallback(() => {
-    setHomeworkList(crmStore.getHomework());
-    setGroups(crmStore.getGroups());
-    setLessons(crmStore.getLessons());
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [hwList, grList, lsList, enrList, subList] = await Promise.all([
+        getHomeworkList(),
+        getGroups(),
+        getLessons(),
+        getGroupStudents(),
+        getHomeworkSubmissions(),
+      ]);
+      setHomeworkList(hwList);
+      setGroups(grList);
+      setLessons(lsList);
+      setEnrollments(enrList);
+      setSubmissions(subList);
+    } catch {
+      toast.error("Vazifalarni yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Group student count map
+  const groupStudentCounts = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const enr of enrollments) {
+      if (enr.status === "Faol") {
+        map.set(enr.group_id, (map.get(enr.group_id) || 0) + 1);
+      }
+    }
+    return map;
+  }, [enrollments]);
+
+  // Submissions map
+  const submissionsMap = React.useMemo(() => {
+    const map = new Map<string, HomeworkSubmission[]>();
+    for (const sub of submissions) {
+      const current = map.get(sub.homework_id) || [];
+      current.push(sub);
+      map.set(sub.homework_id, current);
+    }
+    return map;
+  }, [submissions]);
 
   const filteredHomework = React.useMemo(() => {
     return homeworkList.filter((hw) => {
@@ -77,41 +125,56 @@ export function HomeworkListView() {
 
   const handleSaveHomework = async (values: HomeworkFormValues, id?: string) => {
     try {
-      crmStore.saveHomework({
-        id,
-        group_id: values.group_id,
-        lesson_id: values.lesson_id || null,
-        title: values.title,
-        description: values.description || null,
-        assigned_date: values.assigned_date,
-        due_date: values.due_date || null,
-      });
+      if (id) {
+        await updateHomework(id, {
+          group_id: values.group_id,
+          lesson_id: values.lesson_id || null,
+          title: values.title,
+          description: values.description || null,
+          assigned_date: values.assigned_date,
+          due_date: values.due_date || null,
+        });
+        toast.success("Vazifa ma'lumotlari yangilandi");
+      } else {
+        await createHomework({
+          group_id: values.group_id,
+          lesson_id: values.lesson_id || null,
+          title: values.title,
+          description: values.description || null,
+          assigned_date: values.assigned_date,
+          due_date: values.due_date || null,
+        });
+        toast.success("Yangi vazifa berildi");
+      }
 
-      toast.success(id ? "Vazifa ma'lumotlari yangilandi" : "Yangi vazifa berildi");
-      loadData();
+      await loadData();
     } catch {
       toast.error("Vazifani saqlashda xatolik");
     }
   };
 
-  const handleDeleteHomework = () => {
+  const handleDeleteHomework = async () => {
     if (!homeworkToDelete) return;
     try {
-      crmStore.deleteHomework(homeworkToDelete.id);
+      await deleteHomework(homeworkToDelete.id);
       toast.success("Vazifa o‘chirildi");
       setDeleteConfirmOpen(false);
       setHomeworkToDelete(null);
-      loadData();
+      await loadData();
     } catch {
       toast.error("O‘chirishda xatolik");
     }
   };
 
-  const handleOpenGrading = (hw: Homework) => {
-    const students = crmStore.getStudentsByGroupId(hw.group_id);
-    setSelectedHomeworkForGrading(hw);
-    setGroupStudentsForGrading(students);
-    setGradingDialogOpen(true);
+  const handleOpenGrading = async (hw: Homework) => {
+    try {
+      const students = await getStudentsByGroupId(hw.group_id);
+      setSelectedHomeworkForGrading(hw);
+      setGroupStudentsForGrading(students);
+      setGradingDialogOpen(true);
+    } catch {
+      toast.error("Guruh o‘quvchilarini yuklashda xatolik");
+    }
   };
 
   return (
@@ -163,7 +226,12 @@ export function HomeworkListView() {
       </div>
 
       {/* List */}
-      {filteredHomework.length === 0 ? (
+      {loading ? (
+        <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">Vazifalar yuklanmoqda...</p>
+        </div>
+      ) : filteredHomework.length === 0 ? (
         <EmptyState
           icon={FileCheck2}
           title="Vazifalar topilmadi"
@@ -187,10 +255,9 @@ export function HomeworkListView() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredHomework.map((hw) => {
             const group = groups.find((g) => g.id === hw.group_id);
-            const submissions = crmStore.getHomeworkSubmissions(hw.id);
-            const groupStudents = crmStore.getStudentsByGroupId(hw.group_id);
-            const completedCount = submissions.filter((s) => s.status === "Bajarildi").length;
-            const totalStudents = groupStudents.length;
+            const hwSubmissions = submissionsMap.get(hw.id) || [];
+            const completedCount = hwSubmissions.filter((s) => s.status === "Bajarildi").length;
+            const totalStudents = groupStudentCounts.get(hw.group_id) || 0;
             const percent =
               totalStudents > 0 ? Math.round((completedCount / totalStudents) * 100) : 0;
 

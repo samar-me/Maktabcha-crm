@@ -637,6 +637,7 @@ export const crmStore = {
           status: sub.status,
           score: sub.score || null,
           feedback: sub.feedback || null,
+          submitted_at: now,
           created_at: now,
           updated_at: now,
         };

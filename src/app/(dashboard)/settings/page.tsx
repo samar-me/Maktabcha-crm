@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { crmStore } from "@/services/crm-store";
+import { getSettings, updateSettings } from "@/services/settings";
 import {
   Building2,
   Save,
@@ -19,13 +20,14 @@ import {
   Lock,
   KeyRound,
   RotateCcw,
-  Shield,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [loading, setLoading] = React.useState(false);
+  const [fetching, setFetching] = React.useState(true);
 
   const [settings, setSettings] = React.useState({
     centerName: "Maktabcha O‘quv Markazi",
@@ -44,22 +46,52 @@ export default function SettingsPage() {
   const [confirmNewPinCode, setConfirmNewPinCode] = React.useState("");
 
   React.useEffect(() => {
-    setHasPin(crmStore.hasPinCode());
+    async function load() {
+      try {
+        setFetching(true);
+        const data = await getSettings();
+        setSettings({
+          centerName: data.center_name,
+          adminName: data.admin_name,
+          phone: data.phone || "",
+          address: data.address || "",
+          defaultCurrency: data.default_currency,
+          defaultMonthlyFee: String(data.default_monthly_fee),
+        });
+        setHasPin(crmStore.hasPinCode());
+      } catch {
+        toast.error("Sozlamalarni yuklashda xatolik");
+      } finally {
+        setFetching(false);
+      }
+    }
+    load();
   }, []);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await updateSettings({
+        center_name: settings.centerName,
+        admin_name: settings.adminName,
+        phone: settings.phone || null,
+        address: settings.address || null,
+        default_currency: settings.defaultCurrency,
+        default_monthly_fee: Number(settings.defaultMonthlyFee) || 350000,
+      });
       toast.success("Sozlamalar muvaffaqiyatli saqlandi!");
-    }, 400);
+    } catch {
+      toast.error("Sozlamalarni saqlashda xatolik");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdatePin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!oldMasterPass.trim()) {
-      toast.error("Iltimos, tasdiqlash uchun asosiy parolni (@Samar18) kiriting");
+      toast.error("Iltimos, tasdiqlash uchun asosiy parolni kiriting");
       return;
     }
 
@@ -91,7 +123,7 @@ export default function SettingsPage() {
     crmStore.resetPinCode();
     setHasPin(false);
     setIsChangingPin(false);
-    toast.info("PIN-kod bekor qilindi. Endi kirishda yana asosiy parol (@Samar18) so‘raladi.");
+    toast.info("PIN-kod bekor qilindi. Endi kirishda yana asosiy parol so‘raladi.");
   };
 
   return (
@@ -135,7 +167,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {hasPin
                     ? "Dasturga kirishda faqat ushbu PIN-koddan foydalaniladi"
-                    : "Dasturga kirishda asosiy parol (@Samar18) so‘raladi"}
+                    : "Dasturga kirishda asosiy maxfiy parol so‘raladi"}
                 </p>
               </div>
 
@@ -251,49 +283,56 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="centerName">O‘quv markaz nomi</Label>
-                <Input
-                  id="centerName"
-                  value={settings.centerName}
-                  onChange={(e) => setSettings({ ...settings, centerName: e.target.value })}
-                  placeholder="Masalan: Bilim Maktabi"
-                  required
-                />
+            {fetching ? (
+              <div className="p-6 flex items-center justify-center gap-2 text-muted-foreground text-xs">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <span>Sozlamalar yuklanmoqda...</span>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="centerName">O‘quv markaz nomi</Label>
+                  <Input
+                    id="centerName"
+                    value={settings.centerName}
+                    onChange={(e) => setSettings({ ...settings, centerName: e.target.value })}
+                    placeholder="Masalan: Bilim Maktabi"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="adminName">Bosh administrator ismi</Label>
-                <Input
-                  id="adminName"
-                  value={settings.adminName}
-                  onChange={(e) => setSettings({ ...settings, adminName: e.target.value })}
-                  placeholder="Ism va familiya"
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adminName">Bosh administrator ismi</Label>
+                  <Input
+                    id="adminName"
+                    value={settings.adminName}
+                    onChange={(e) => setSettings({ ...settings, adminName: e.target.value })}
+                    placeholder="Ism va familiya"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Aloqa telefoni</Label>
-                <Input
-                  id="phone"
-                  value={settings.phone}
-                  onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                  placeholder="+998 90 123 45 67"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Aloqa telefoni</Label>
+                  <Input
+                    id="phone"
+                    value={settings.phone}
+                    onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                    placeholder="+998 90 123 45 67"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Manzil</Label>
-                <Input
-                  id="address"
-                  value={settings.address}
-                  onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                  placeholder="Shahar, tuman, ko‘cha"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="address">Manzil</Label>
+                  <Input
+                    id="address"
+                    value={settings.address}
+                    onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                    placeholder="Shahar, tuman, ko‘cha"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 

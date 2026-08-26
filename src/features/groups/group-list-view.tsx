@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Group, ScheduleItem } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { Group, GroupStudent, ScheduleItem } from "@/types/database";
+import { getGroups, createGroup, updateGroup, deleteGroup, getGroupStudents } from "@/services/groups";
 import { GroupFormDialog } from "./group-form-dialog";
 import { GroupFormValues } from "./group-schema";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -17,7 +17,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -32,13 +31,15 @@ import {
   Edit,
   Trash2,
   Eye,
-  GraduationCap,
-  CalendarDays,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 export function GroupListView() {
   const [groups, setGroups] = React.useState<Group[]>([]);
+  const [enrollments, setEnrollments] = React.useState<GroupStudent[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
 
@@ -48,13 +49,36 @@ export function GroupListView() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [groupToDelete, setGroupToDelete] = React.useState<Group | null>(null);
 
-  const loadGroups = React.useCallback(() => {
-    setGroups(crmStore.getGroups());
+  const loadGroups = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [grList, enrList] = await Promise.all([
+        getGroups(),
+        getGroupStudents(),
+      ]);
+      setGroups(grList);
+      setEnrollments(enrList);
+    } catch {
+      toast.error("Guruhlarni yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     loadGroups();
   }, [loadGroups]);
+
+  // Group student counts map
+  const groupStudentCounts = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const enr of enrollments) {
+      if (enr.status === "Faol") {
+        map.set(enr.group_id, (map.get(enr.group_id) || 0) + 1);
+      }
+    }
+    return map;
+  }, [enrollments]);
 
   const filteredGroups = React.useMemo(() => {
     return groups.filter((g) => {
@@ -72,33 +96,46 @@ export function GroupListView() {
 
   const handleSaveGroup = async (values: GroupFormValues, id?: string) => {
     try {
-      crmStore.saveGroup({
-        id,
-        name: values.name,
-        course_name: values.course_name,
-        teacher_name: values.teacher_name,
-        monthly_fee: values.monthly_fee,
-        room: values.room || null,
-        start_date: values.start_date,
-        status: values.status,
-        schedule: values.schedule,
-      });
+      if (id) {
+        await updateGroup(id, {
+          name: values.name,
+          course_name: values.course_name,
+          teacher_name: values.teacher_name,
+          monthly_fee: values.monthly_fee,
+          room: values.room || null,
+          start_date: values.start_date,
+          status: values.status,
+          schedule: values.schedule,
+        });
+        toast.success("Guruh ma'lumotlari yangilandi");
+      } else {
+        await createGroup({
+          name: values.name,
+          course_name: values.course_name,
+          teacher_name: values.teacher_name,
+          monthly_fee: values.monthly_fee,
+          room: values.room || null,
+          start_date: values.start_date,
+          status: values.status,
+          schedule: values.schedule,
+        });
+        toast.success("Yangi guruh muvaffaqiyatli ochildi");
+      }
 
-      toast.success(id ? "Guruh ma'lumotlari yangilandi" : "Yangi guruh ochildi");
-      loadGroups();
+      await loadGroups();
     } catch {
       toast.error("Guruhni saqlashda xatolik yuz berdi");
     }
   };
 
-  const handleDeleteGroup = () => {
+  const handleDeleteGroup = async () => {
     if (!groupToDelete) return;
     try {
-      crmStore.deleteGroup(groupToDelete.id);
+      await deleteGroup(groupToDelete.id);
       toast.success("Guruh tizimdan o‘chirildi");
       setDeleteConfirmOpen(false);
       setGroupToDelete(null);
-      loadGroups();
+      await loadGroups();
     } catch {
       toast.error("O‘chirishda xatolik yuz berdi");
     }
@@ -151,7 +188,12 @@ export function GroupListView() {
       </div>
 
       {/* Groups Grid */}
-      {filteredGroups.length === 0 ? (
+      {loading ? (
+        <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">Guruhlar yuklanmoqda...</p>
+        </div>
+      ) : filteredGroups.length === 0 ? (
         <EmptyState
           icon={UsersRound}
           title="Guruhlar topilmadi"
@@ -174,7 +216,7 @@ export function GroupListView() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredGroups.map((grp) => {
-            const studentCount = crmStore.getStudentsByGroupId(grp.id).length;
+            const studentCount = groupStudentCounts.get(grp.id) || 0;
             const scheduleList = Array.isArray(grp.schedule)
               ? (grp.schedule as ScheduleItem[])
               : [];

@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Student, Group } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { Student, Group, GroupStudent } from "@/types/database";
+import { getStudents, createStudent, updateStudent, deleteStudent } from "@/services/students";
+import { getGroups, getGroupStudents, addStudentToGroup } from "@/services/groups";
 import { StudentFormDialog } from "./student-form-dialog";
 import { StudentFormValues } from "./student-schema";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -12,7 +13,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { excelExport } from "@/lib/excel-export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,11 +30,11 @@ import {
   Edit,
   Trash2,
   Phone,
-  Calendar,
   FileSpreadsheet,
   CheckCircle2,
   Clock,
   UserX,
+  Loader2,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -41,6 +42,9 @@ import { toast } from "sonner";
 export function StudentListView() {
   const [students, setStudents] = React.useState<Student[]>([]);
   const [groups, setGroups] = React.useState<Group[]>([]);
+  const [enrollments, setEnrollments] = React.useState<GroupStudent[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [groupFilter, setGroupFilter] = React.useState<string>("all");
@@ -51,16 +55,46 @@ export function StudentListView() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [studentToDelete, setStudentToDelete] = React.useState<Student | null>(null);
 
-  const loadData = React.useCallback(() => {
-    setStudents(crmStore.getStudents());
-    setGroups(crmStore.getGroups());
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [stList, grList, enrList] = await Promise.all([
+        getStudents(),
+        getGroups(),
+        getGroupStudents(),
+      ]);
+      setStudents(stList);
+      setGroups(grList);
+      setEnrollments(enrList);
+    } catch (err: any) {
+      toast.error("Ma'lumotlarni yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Debounced/filtered students computation
+  // Group Map for student groups
+  const studentGroupsMap = React.useMemo(() => {
+    const map = new Map<string, Group[]>();
+    const groupMap = new Map(groups.map((g) => [g.id, g]));
+
+    for (const enr of enrollments) {
+      if (enr.status !== "Faol") continue;
+      const g = groupMap.get(enr.group_id);
+      if (!g) continue;
+
+      const current = map.get(enr.student_id) || [];
+      current.push(g);
+      map.set(enr.student_id, current);
+    }
+    return map;
+  }, [enrollments, groups]);
+
+  // Filtered students computation
   const filteredStudents = React.useMemo(() => {
     return students.filter((student) => {
       const q = searchQuery.toLowerCase().trim();
@@ -76,62 +110,77 @@ export function StudentListView() {
 
       let matchesGroup = true;
       if (groupFilter !== "all") {
-        const studentGroups = crmStore.getGroupsByStudentId(student.id);
+        const studentGroups = studentGroupsMap.get(student.id) || [];
         matchesGroup = studentGroups.some((g) => g.id === groupFilter);
       }
 
       return matchesSearch && matchesStatus && matchesGroup;
     });
-  }, [students, searchQuery, statusFilter, groupFilter]);
+  }, [students, searchQuery, statusFilter, groupFilter, studentGroupsMap]);
 
   const handleSaveStudent = async (values: StudentFormValues, id?: string) => {
     try {
-      const saved = crmStore.saveStudent({
-        id,
-        first_name: values.first_name,
-        last_name: values.last_name || null,
-        phone: values.phone || null,
-        parent_name: values.parent_name || null,
-        parent_phone: values.parent_phone || null,
-        birth_date: values.birth_date || null,
-        gender: values.gender || "Erkak",
-        address: values.address || null,
-        joined_at: id
-          ? students.find((s) => s.id === id)?.joined_at || new Date().toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0],
-        status: values.status,
-        notes: values.notes || null,
-        avatar_url: null,
-      });
+      if (id) {
+        await updateStudent(id, {
+          first_name: values.first_name,
+          last_name: values.last_name || null,
+          phone: values.phone || null,
+          parent_name: values.parent_name || null,
+          parent_phone: values.parent_phone || null,
+          birth_date: values.birth_date || null,
+          gender: values.gender || "Erkak",
+          address: values.address || null,
+          status: values.status,
+          notes: values.notes || null,
+        });
+        toast.success("O‘quvchi ma'lumotlari yangilandi");
+      } else {
+        const created = await createStudent({
+          first_name: values.first_name,
+          last_name: values.last_name || null,
+          phone: values.phone || null,
+          parent_name: values.parent_name || null,
+          parent_phone: values.parent_phone || null,
+          birth_date: values.birth_date || null,
+          gender: values.gender || "Erkak",
+          address: values.address || null,
+          status: values.status,
+          notes: values.notes || null,
+        });
 
-      if (values.group_id) {
-        crmStore.addStudentToGroup(values.group_id, saved.id);
+        if (values.group_id) {
+          await addStudentToGroup(values.group_id, created.id);
+        }
+        toast.success("Yangi o‘quvchi muvaffaqiyatli qo‘shildi");
       }
 
-      toast.success(id ? "O‘quvchi ma'lumotlari yangilandi" : "Yangi o‘quvchi muvaffaqiyatli qo‘shildi");
-      loadData();
+      await loadData();
     } catch {
       toast.error("O‘quvchini saqlashda xatolik yuz berdi");
     }
   };
 
-  const handleDeleteStudent = () => {
+  const handleDeleteStudent = async () => {
     if (!studentToDelete) return;
     try {
-      crmStore.deleteStudent(studentToDelete.id);
+      await deleteStudent(studentToDelete.id);
       toast.success(`${studentToDelete.first_name} tizimdan o‘chirildi`);
       setDeleteConfirmOpen(false);
       setStudentToDelete(null);
-      loadData();
+      await loadData();
     } catch {
       toast.error("O‘chirishda xatolik yuz berdi");
     }
   };
 
-  const handleStatusChange = (student: Student, newStatus: Student["status"]) => {
-    crmStore.updateStudentStatus(student.id, newStatus);
-    toast.success(`Holat «${newStatus}»ga o‘zgartirildi`);
-    loadData();
+  const handleStatusChange = async (student: Student, newStatus: Student["status"]) => {
+    try {
+      await updateStudent(student.id, { status: newStatus });
+      toast.success(`Holat «${newStatus}»ga o‘zgartirildi`);
+      await loadData();
+    } catch {
+      toast.error("Holatni o‘zgartirishda xatolik");
+    }
   };
 
   const handleExportExcel = () => {
@@ -221,7 +270,12 @@ export function StudentListView() {
       </div>
 
       {/* Main Student List / Table */}
-      {filteredStudents.length === 0 ? (
+      {loading ? (
+        <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">O‘quvchilar ro‘yxati yuklanmoqda...</p>
+        </div>
+      ) : filteredStudents.length === 0 ? (
         <EmptyState
           icon={Users}
           title="O‘quvchilar topilmadi"
@@ -258,7 +312,7 @@ export function StudentListView() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredStudents.map((st) => {
-                  const studentGroups = crmStore.getGroupsByStudentId(st.id);
+                  const studentGroups = studentGroupsMap.get(st.id) || [];
 
                   return (
                     <tr

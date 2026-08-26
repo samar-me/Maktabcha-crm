@@ -2,10 +2,17 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Group, Student, Payment, Lesson, ScheduleItem } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
-import { PageHeader } from "@/components/shared/page-header";
+import { Group, Student, Lesson, ScheduleItem, Attendance } from "@/types/database";
+import {
+  getGroupById,
+  updateGroup,
+  getStudentsByGroupId,
+  addStudentToGroup,
+  removeStudentFromGroup,
+} from "@/services/groups";
+import { getStudents } from "@/services/students";
+import { getLessons } from "@/services/lessons";
+import { getAttendance } from "@/services/attendance";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { StatCard } from "@/components/shared/stat-card";
@@ -16,7 +23,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { excelExport } from "@/lib/excel-export";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
@@ -32,9 +39,9 @@ import {
   UserMinus,
   AlertCircle,
   FileSpreadsheet,
-  CheckCircle2,
+  Loader2,
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
 
 interface GroupDetailViewProps {
@@ -42,11 +49,12 @@ interface GroupDetailViewProps {
 }
 
 export function GroupDetailView({ groupId }: GroupDetailViewProps) {
-  const router = useRouter();
   const [group, setGroup] = React.useState<Group | null>(null);
   const [students, setStudents] = React.useState<Student[]>([]);
   const [allStudents, setAllStudents] = React.useState<Student[]>([]);
   const [lessons, setLessons] = React.useState<Lesson[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = React.useState<Attendance[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   const [formDialogOpen, setFormDialogOpen] = React.useState(false);
   const [addStudentDialogOpen, setAddStudentDialogOpen] = React.useState(false);
@@ -54,21 +62,46 @@ export function GroupDetailView({ groupId }: GroupDetailViewProps) {
   const [removeConfirmOpen, setRemoveConfirmOpen] = React.useState(false);
   const [studentToRemove, setStudentToRemove] = React.useState<Student | null>(null);
 
-  const loadGroupData = React.useCallback(() => {
-    const grp = crmStore.getGroupById(groupId);
-    if (!grp) {
-      setGroup(null);
-      return;
+  const loadGroupData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const grp = await getGroupById(groupId);
+      if (!grp) {
+        setGroup(null);
+        return;
+      }
+      setGroup(grp);
+
+      const [grpStudents, totalStudents, grpLessons, grpAtt] = await Promise.all([
+        getStudentsByGroupId(groupId),
+        getStudents(),
+        getLessons(groupId),
+        getAttendance({ groupId }),
+      ]);
+
+      setStudents(grpStudents);
+      setAllStudents(totalStudents);
+      setLessons(grpLessons);
+      setAttendanceRecords(grpAtt);
+    } catch {
+      toast.error("Guruh ma'lumotlarini yuklashda xatolik");
+    } finally {
+      setLoading(false);
     }
-    setGroup(grp);
-    setStudents(crmStore.getStudentsByGroupId(groupId));
-    setAllStudents(crmStore.getStudents());
-    setLessons(crmStore.getLessons(groupId));
   }, [groupId]);
 
   React.useEffect(() => {
     loadGroupData();
   }, [loadGroupData]);
+
+  if (loading) {
+    return (
+      <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        <p className="text-xs">Guruh ma'lumotlari yuklanmoqda...</p>
+      </div>
+    );
+  }
 
   if (!group) {
     return (
@@ -94,14 +127,19 @@ export function GroupDetailView({ groupId }: GroupDetailViewProps) {
   }
 
   const expectedMonthlyRevenue = students.length * Number(group.monthly_fee || 0);
-  const groupStats = crmStore.getGroupAttendanceStats(group.id);
+
+  const presentCount = attendanceRecords.filter((a) => a.status === "Keldi").length;
+  const attendanceRate =
+    attendanceRecords.length > 0
+      ? Math.round((presentCount / attendanceRecords.length) * 100)
+      : 100;
+
   const scheduleItems: ScheduleItem[] = (Array.isArray(group.schedule) ? group.schedule : []) as ScheduleItem[];
   const availableStudentsToAdd = allStudents.filter((s) => !students.some((cur) => cur.id === s.id));
 
   const handleUpdateGroup = async (values: GroupFormValues) => {
     try {
-      crmStore.saveGroup({
-        id: group.id,
+      await updateGroup(group.id, {
         name: values.name,
         course_name: values.course_name,
         teacher_name: values.teacher_name,
@@ -113,7 +151,7 @@ export function GroupDetailView({ groupId }: GroupDetailViewProps) {
       });
 
       toast.success("Guruh ma'lumotlari yangilandi");
-      loadGroupData();
+      await loadGroupData();
     } catch {
       toast.error("Guruhni yangilashda xatolik");
     }
@@ -121,22 +159,22 @@ export function GroupDetailView({ groupId }: GroupDetailViewProps) {
 
   const handleAddStudent = async (studentId: string) => {
     try {
-      crmStore.addStudentToGroup(group.id, studentId);
+      await addStudentToGroup(group.id, studentId);
       toast.success("O‘quvchi guruhga muvaffaqiyatli biriktirildi");
-      loadGroupData();
+      await loadGroupData();
     } catch {
       toast.error("O‘quvchini biriktirishda xatolik");
     }
   };
 
-  const handleRemoveStudent = () => {
+  const handleRemoveStudent = async () => {
     if (!studentToRemove) return;
     try {
-      crmStore.removeStudentFromGroup(group.id, studentToRemove.id);
+      await removeStudentFromGroup(group.id, studentToRemove.id);
       toast.success(`${studentToRemove.first_name} guruhdan chiqarildi`);
       setRemoveConfirmOpen(false);
       setStudentToRemove(null);
-      loadGroupData();
+      await loadGroupData();
     } catch {
       toast.error("O‘quvchini chiqarishda xatolik");
     }
@@ -253,7 +291,7 @@ export function GroupDetailView({ groupId }: GroupDetailViewProps) {
         />
         <StatCard
           title="O‘rtacha davomat"
-          value={`${groupStats.rate}%`}
+          value={`${attendanceRate}%`}
           icon={CalendarCheck2}
           subtitle="Guruh qatnashish darajasi"
           iconColorClass="text-emerald-600 dark:text-emerald-400"

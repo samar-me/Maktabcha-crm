@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Lesson, Group } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { Lesson, Group, Attendance, GroupStudent } from "@/types/database";
+import { getLessons, createLesson, updateLesson, deleteLesson } from "@/services/lessons";
+import { getGroups, getGroupStudents } from "@/services/groups";
+import { getAttendance } from "@/services/attendance";
 import { LessonFormDialog } from "./lesson-form-dialog";
 import { LessonFormValues } from "./lesson-schema";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -16,7 +18,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -32,6 +33,7 @@ import {
   Trash2,
   FileCheck2,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -39,6 +41,10 @@ import { toast } from "sonner";
 export function LessonListView() {
   const [lessons, setLessons] = React.useState<Lesson[]>([]);
   const [groups, setGroups] = React.useState<Group[]>([]);
+  const [enrollments, setEnrollments] = React.useState<GroupStudent[]>([]);
+  const [attendanceList, setAttendanceList] = React.useState<Attendance[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [groupFilter, setGroupFilter] = React.useState<string>("all");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
@@ -49,14 +55,51 @@ export function LessonListView() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [lessonToDelete, setLessonToDelete] = React.useState<Lesson | null>(null);
 
-  const loadData = React.useCallback(() => {
-    setLessons(crmStore.getLessons());
-    setGroups(crmStore.getGroups());
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [lsList, grList, enrList, attList] = await Promise.all([
+        getLessons(),
+        getGroups(),
+        getGroupStudents(),
+        getAttendance(),
+      ]);
+      setLessons(lsList);
+      setGroups(grList);
+      setEnrollments(enrList);
+      setAttendanceList(attList);
+    } catch {
+      toast.error("Darslarni yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Group student count map
+  const groupStudentCounts = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const enr of enrollments) {
+      if (enr.status === "Faol") {
+        map.set(enr.group_id, (map.get(enr.group_id) || 0) + 1);
+      }
+    }
+    return map;
+  }, [enrollments]);
+
+  // Lesson attendance map
+  const lessonAttendanceMap = React.useMemo(() => {
+    const map = new Map<string, Attendance[]>();
+    for (const att of attendanceList) {
+      const current = map.get(att.lesson_id) || [];
+      current.push(att);
+      map.set(att.lesson_id, current);
+    }
+    return map;
+  }, [attendanceList]);
 
   const filteredLessons = React.useMemo(() => {
     return lessons.filter((ls) => {
@@ -76,33 +119,46 @@ export function LessonListView() {
 
   const handleSaveLesson = async (values: LessonFormValues, id?: string) => {
     try {
-      crmStore.saveLesson({
-        id,
-        group_id: values.group_id,
-        date: values.date,
-        start_time: values.start_time,
-        end_time: values.end_time,
-        topic: values.topic,
-        description: values.description || null,
-        homework: values.homework || null,
-        status: values.status,
-      });
+      if (id) {
+        await updateLesson(id, {
+          group_id: values.group_id,
+          date: values.date,
+          start_time: values.start_time,
+          end_time: values.end_time,
+          topic: values.topic,
+          description: values.description || null,
+          homework: values.homework || null,
+          status: values.status,
+        });
+        toast.success("Dars ma'lumotlari yangilandi");
+      } else {
+        await createLesson({
+          group_id: values.group_id,
+          date: values.date,
+          start_time: values.start_time,
+          end_time: values.end_time,
+          topic: values.topic,
+          description: values.description || null,
+          homework: values.homework || null,
+          status: values.status,
+        });
+        toast.success("Yangi dars muvaffaqiyatli rejalashtirildi");
+      }
 
-      toast.success(id ? "Dars ma'lumotlari yangilandi" : "Yangi dars rejalashtirildi");
-      loadData();
+      await loadData();
     } catch {
       toast.error("Darsni saqlashda xatolik yuz berdi");
     }
   };
 
-  const handleDeleteLesson = () => {
+  const handleDeleteLesson = async () => {
     if (!lessonToDelete) return;
     try {
-      crmStore.deleteLesson(lessonToDelete.id);
+      await deleteLesson(lessonToDelete.id);
       toast.success("Dars tizimdan o‘chirildi");
       setDeleteConfirmOpen(false);
       setLessonToDelete(null);
-      loadData();
+      await loadData();
     } catch {
       toast.error("O‘chirishda xatolik yuz berdi");
     }
@@ -171,7 +227,12 @@ export function LessonListView() {
       </div>
 
       {/* Lessons List */}
-      {filteredLessons.length === 0 ? (
+      {loading ? (
+        <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">Darslar yuklanmoqda...</p>
+        </div>
+      ) : filteredLessons.length === 0 ? (
         <EmptyState
           icon={BookOpen}
           title="Darslar topilmadi"
@@ -196,9 +257,9 @@ export function LessonListView() {
         <div className="space-y-3">
           {filteredLessons.map((ls) => {
             const group = groups.find((g) => g.id === ls.group_id);
-            const attendanceRecords = crmStore.getAttendance(ls.id);
+            const attendanceRecords = lessonAttendanceMap.get(ls.id) || [];
             const presentCount = attendanceRecords.filter((a) => a.status === "Keldi").length;
-            const totalStudents = crmStore.getStudentsByGroupId(ls.group_id).length;
+            const totalStudents = groupStudentCounts.get(ls.group_id) || 0;
 
             return (
               <Card
@@ -215,7 +276,7 @@ export function LessonListView() {
                       {attendanceRecords.length > 0 && (
                         <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" />
-                          Davomat: {presentCount} / {totalStudents} keldi
+                          Davomat: {presentCount} / {totalStudents || attendanceRecords.length} keldi
                         </span>
                       )}
                     </div>

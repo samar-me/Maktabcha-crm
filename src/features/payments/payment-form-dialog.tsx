@@ -4,8 +4,8 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { paymentSchema, PaymentFormValues } from "./payment-schema";
-import { Payment, Group, Student, PaymentMethod } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { Payment, Group, Student } from "@/types/database";
+import { getGroupsByStudentId } from "@/services/groups";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +50,7 @@ export function PaymentFormDialog({
 }: PaymentFormDialogProps) {
   const isEditing = !!payment;
   const [loading, setLoading] = React.useState(false);
+  const [studentGroups, setStudentGroups] = React.useState<Group[]>(groups);
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
@@ -80,44 +81,67 @@ export function PaymentFormDialog({
   const selectedMethod = watch("payment_method");
   const selectedMonth = watch("month");
   const selectedYear = watch("year");
-  const currentAmount = watch("amount");
 
-  // Get groups of selected student
-  const studentGroups = React.useMemo(() => {
-    if (!selectedStudentId) return groups;
-    const enrolled = crmStore.getGroupsByStudentId(selectedStudentId);
-    return enrolled.length > 0 ? enrolled : groups;
+  React.useEffect(() => {
+    async function updateStudentGroups() {
+      if (!selectedStudentId) {
+        setStudentGroups(groups);
+        return;
+      }
+      try {
+        const enrolled = await getGroupsByStudentId(selectedStudentId);
+        setStudentGroups(enrolled.length > 0 ? enrolled : groups);
+      } catch {
+        setStudentGroups(groups);
+      }
+    }
+    updateStudentGroups();
   }, [selectedStudentId, groups]);
 
   React.useEffect(() => {
-    if (payment) {
-      reset({
-        student_id: payment.student_id,
-        group_id: payment.group_id,
-        amount: payment.amount,
-        payment_date: payment.payment_date,
-        payment_method: payment.payment_method,
-        month: payment.month,
-        year: payment.year,
-        note: payment.note || "",
-      });
-    } else {
-      const studentIdToUse = initialStudentId || (students[0]?.id || "");
-      const enrolled = crmStore.getGroupsByStudentId(studentIdToUse);
-      const groupIdToUse = initialGroupId || (enrolled[0]?.id || (groups[0]?.id || ""));
-      const selectedGroup = groups.find((g) => g.id === groupIdToUse);
+    async function initForm() {
+      if (payment) {
+        reset({
+          student_id: payment.student_id,
+          group_id: payment.group_id,
+          amount: payment.amount,
+          payment_date: payment.payment_date,
+          payment_method: payment.payment_method,
+          month: payment.month,
+          year: payment.year,
+          note: payment.note || "",
+        });
+      } else {
+        const studentIdToUse = initialStudentId || (students[0]?.id || "");
+        let groupIdToUse = initialGroupId || "";
 
-      reset({
-        student_id: studentIdToUse,
-        group_id: groupIdToUse,
-        amount: selectedGroup ? Number(selectedGroup.monthly_fee) : 400000,
-        payment_date: new Date().toISOString().split("T")[0],
-        payment_method: "Karta",
-        month: currentMonth,
-        year: currentYear,
-        note: "",
-      });
+        if (!groupIdToUse && studentIdToUse) {
+          try {
+            const enrolled = await getGroupsByStudentId(studentIdToUse);
+            if (enrolled.length > 0) {
+              groupIdToUse = enrolled[0].id;
+            }
+          } catch {}
+        }
+        if (!groupIdToUse && groups.length > 0) {
+          groupIdToUse = groups[0].id;
+        }
+
+        const selectedGroup = groups.find((g) => g.id === groupIdToUse);
+
+        reset({
+          student_id: studentIdToUse,
+          group_id: groupIdToUse,
+          amount: selectedGroup ? Number(selectedGroup.monthly_fee) : 400000,
+          payment_date: new Date().toISOString().split("T")[0],
+          payment_method: "Karta",
+          month: currentMonth,
+          year: currentYear,
+          note: "",
+        });
+      }
     }
+    initForm();
   }, [payment, initialStudentId, initialGroupId, groups, students, reset, open, currentMonth, currentYear]);
 
   const onSubmit = async (values: PaymentFormValues) => {
@@ -168,13 +192,15 @@ export function PaymentFormDialog({
               </Label>
               <Select
                 value={selectedStudentId}
-                onValueChange={(val) => {
+                onValueChange={async (val) => {
                   setValue("student_id", val);
-                  const enrolled = crmStore.getGroupsByStudentId(val);
-                  if (enrolled.length > 0) {
-                    setValue("group_id", enrolled[0].id);
-                    setValue("amount", Number(enrolled[0].monthly_fee));
-                  }
+                  try {
+                    const enrolled = await getGroupsByStudentId(val);
+                    if (enrolled.length > 0) {
+                      setValue("group_id", enrolled[0].id);
+                      setValue("amount", Number(enrolled[0].monthly_fee));
+                    }
+                  } catch {}
                 }}
               >
                 <SelectTrigger>

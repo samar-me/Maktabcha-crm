@@ -1,8 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Student, Group, Payment, Attendance, Lesson } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { Student, Group, Payment, Attendance, Lesson, GroupStudent } from "@/types/database";
+import { getPayments } from "@/services/payments";
+import { getGroups, getGroupStudents } from "@/services/groups";
+import { getStudents } from "@/services/students";
+import { getAttendance } from "@/services/attendance";
+import { getLessons } from "@/services/lessons";
+import { getDebtors, DebtorInfo } from "@/services/debtors";
+import { getMonthlyFinancialSummary, MonthlyFinancialSummary } from "@/services/reports";
 import { StatCard } from "@/components/shared/stat-card";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,14 +18,10 @@ import {
   Wallet,
   CalendarCheck2,
   Users,
-  GraduationCap,
-  PieChart as PieIcon,
-  BarChart3,
-  Calendar,
   CreditCard,
-  CheckCircle2,
+  Loader2,
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import {
   ResponsiveContainer,
   BarChart,
@@ -40,19 +42,52 @@ export function ReportsView() {
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [students, setStudents] = React.useState<Student[]>([]);
+  const [enrollments, setEnrollments] = React.useState<GroupStudent[]>([]);
   const [attendance, setAttendance] = React.useState<Attendance[]>([]);
   const [lessons, setLessons] = React.useState<Lesson[]>([]);
+  const [debtors, setDebtors] = React.useState<DebtorInfo[]>([]);
+  const [summary, setSummary] = React.useState<MonthlyFinancialSummary>({
+    totalExpected: 0,
+    totalCollected: 0,
+    totalDebt: 0,
+    collectionRate: 0,
+    debtorsCount: 0,
+  });
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    setPayments(crmStore.getPayments());
-    setGroups(crmStore.getGroups());
-    setStudents(crmStore.getStudents());
-    setAttendance(crmStore.getAttendance());
-    setLessons(crmStore.getLessons());
-  }, []);
+    async function loadReports() {
+      try {
+        setLoading(true);
+        const [pmtList, grpList, stList, enrList, attList, lsList, dList, summ] =
+          await Promise.all([
+            getPayments(),
+            getGroups(),
+            getStudents(),
+            getGroupStudents(),
+            getAttendance(),
+            getLessons(),
+            getDebtors(),
+            getMonthlyFinancialSummary(),
+          ]);
 
-  const summary = crmStore.getMonthlyFinancialSummary();
-  const debtors = crmStore.getDebtors();
+        setPayments(pmtList);
+        setGroups(grpList);
+        setStudents(stList);
+        setEnrollments(enrList);
+        setAttendance(attList);
+        setLessons(lsList);
+        setDebtors(dList);
+        setSummary(summ);
+      } catch (e) {
+        console.error("Error loading reports data:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadReports();
+  }, []);
 
   // 1. Revenue by Month
   const monthlyRevenueData = [
@@ -73,19 +108,32 @@ export function ReportsView() {
     { name: "O‘tkazma (Payme/Click)", value: transferPayments || 400000, color: "#8b5cf6" },
   ];
 
+  // Group student count map
+  const groupStudentCountMap = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const enr of enrollments) {
+      if (enr.status === "Faol") {
+        map.set(enr.group_id, (map.get(enr.group_id) || 0) + 1);
+      }
+    }
+    return map;
+  }, [enrollments]);
+
   // 3. Attendance by Group
   const groupAttendanceData = groups.map((g) => {
-    const stats = crmStore.getGroupAttendanceStats(g.id);
+    const groupAtt = attendance.filter((a) => a.group_id === g.id);
+    const present = groupAtt.filter((a) => a.status === "Keldi").length;
+    const rate = groupAtt.length > 0 ? Math.round((present / groupAtt.length) * 100) : 100;
     return {
       name: g.name,
-      davomat: stats.rate,
+      davomat: rate,
       oqituvchi: g.teacher_name,
     };
   });
 
   // 4. Group Occupancy / Students Count
   const groupOccupancyData = groups.map((g) => {
-    const studentCount = crmStore.getStudentsByGroupId(g.id).length;
+    const studentCount = groupStudentCountMap.get(g.id) || 0;
     return {
       name: g.name,
       oquvchilar: studentCount,
@@ -98,49 +146,61 @@ export function ReportsView() {
     { month: "Noyabr", yangi: 2, jami: 2 },
     { month: "Dekabr", yangi: 1, jami: 3 },
     { month: "Yanvar", yangi: 1, jami: 4 },
-    { month: "Fevral", yangi: 0, jami: 4 },
+    { month: "Fevral", yangi: 0, jami: students.length },
   ];
+
+  // Overall attendance rate
+  const totalAtt = attendance.length;
+  const totalPresent = attendance.filter((a) => a.status === "Keldi").length;
+  const overallAttRate = totalAtt > 0 ? Math.round((totalPresent / totalAtt) * 100) : 100;
 
   return (
     <div className="space-y-6">
       {/* 4 Quick Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Jami tushum hajmi"
-          value={<MoneyDisplay amount={summary.totalCollected} size="lg" variant="positive" />}
-          icon={Wallet}
-          subtitle={`Bu oy kutilgan: ${formatCurrency(summary.totalExpected)}`}
-          iconColorClass="text-emerald-600 dark:text-emerald-400"
-          iconBgClass="bg-emerald-50 dark:bg-emerald-950/50"
-        />
+      {loading ? (
+        <div className="p-8 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">Hisobotlar yuklanmoqda...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Jami tushum hajmi"
+            value={<MoneyDisplay amount={summary.totalCollected} size="lg" variant="positive" />}
+            icon={Wallet}
+            subtitle={`Bu oy kutilgan: ${formatCurrency(summary.totalExpected)}`}
+            iconColorClass="text-emerald-600 dark:text-emerald-400"
+            iconBgClass="bg-emerald-50 dark:bg-emerald-950/50"
+          />
 
-        <StatCard
-          title="Qarzdorlik miqdori"
-          value={<MoneyDisplay amount={summary.totalDebt} size="lg" variant="negative" />}
-          icon={CreditCard}
-          subtitle={`${debtors.length} nafar qarzdor o‘quvchi`}
-          iconColorClass="text-rose-600 dark:text-rose-400"
-          iconBgClass="bg-rose-50 dark:bg-rose-950/50"
-        />
+          <StatCard
+            title="Qarzdorlik miqdori"
+            value={<MoneyDisplay amount={summary.totalDebt} size="lg" variant="negative" />}
+            icon={CreditCard}
+            subtitle={`${debtors.length} nafar qarzdor o‘quvchi`}
+            iconColorClass="text-rose-600 dark:text-rose-400"
+            iconBgClass="bg-rose-50 dark:bg-rose-950/50"
+          />
 
-        <StatCard
-          title="O‘rtacha markaz davomati"
-          value="98%"
-          icon={CalendarCheck2}
-          subtitle="Barcha o‘tkazilgan darslar bo‘yicha"
-          iconColorClass="text-blue-600 dark:text-blue-400"
-          iconBgClass="bg-blue-50 dark:bg-blue-950/50"
-        />
+          <StatCard
+            title="O‘rtacha markaz davomati"
+            value={`${overallAttRate}%`}
+            icon={CalendarCheck2}
+            subtitle="Barcha o‘tkazilgan darslar bo‘yicha"
+            iconColorClass="text-blue-600 dark:text-blue-400"
+            iconBgClass="bg-blue-50 dark:bg-blue-950/50"
+          />
 
-        <StatCard
-          title="Faol o‘quvchilar soni"
-          value={`${students.filter((s) => s.status === "Faol").length} nafar`}
-          icon={Users}
-          subtitle={`${groups.length} ta faol guruhda`}
-          iconColorClass="text-purple-600 dark:text-purple-400"
-          iconBgClass="bg-purple-50 dark:bg-purple-950/50"
-        />
-      </div>
+          <StatCard
+            title="Faol o‘quvchilar soni"
+            value={`${students.filter((s) => s.status === "Faol").length} nafar`}
+            icon={Users}
+            subtitle={`${groups.length} ta faol guruhda`}
+            iconColorClass="text-purple-600 dark:text-purple-400"
+            iconBgClass="bg-purple-50 dark:bg-purple-950/50"
+          />
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="finance" className="space-y-6">
@@ -249,7 +309,7 @@ export function ReportsView() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {groups.map((grp) => {
-                      const studentCount = crmStore.getStudentsByGroupId(grp.id).length;
+                      const studentCount = groupStudentCountMap.get(grp.id) || 0;
                       const expected = studentCount * Number(grp.monthly_fee);
                       const groupPayments = payments.filter((p) => p.group_id === grp.id);
                       const collected = groupPayments.reduce((acc, p) => acc + Number(p.amount), 0);
@@ -309,10 +369,10 @@ export function ReportsView() {
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs font-semibold">
                       <span className="text-emerald-700 dark:text-emerald-400">Keldi (To‘liq ishtirok)</span>
-                      <span>100%</span>
+                      <span>{overallAttRate}%</span>
                     </div>
                     <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: "100%" }} />
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${overallAttRate}%` }} />
                     </div>
                   </div>
 
@@ -339,10 +399,10 @@ export function ReportsView() {
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs font-semibold">
                       <span className="text-rose-700 dark:text-rose-400">Kelmadi</span>
-                      <span>0%</span>
+                      <span>{100 - overallAttRate}%</span>
                     </div>
                     <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-rose-500 rounded-full" style={{ width: "0%" }} />
+                      <div className="h-full bg-rose-500 rounded-full" style={{ width: `${100 - overallAttRate}%` }} />
                     </div>
                   </div>
                 </div>

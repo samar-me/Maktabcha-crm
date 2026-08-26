@@ -2,8 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Student, Group, Payment } from "@/types/database";
-import { crmStore, DebtorInfo } from "@/services/crm-store";
+import { Student, Group } from "@/types/database";
+import { getDebtors, DebtorInfo } from "@/services/debtors";
+import { getMonthlyFinancialSummary, MonthlyFinancialSummary } from "@/services/reports";
+import { getGroups } from "@/services/groups";
+import { getStudents } from "@/services/students";
+import { createPayment } from "@/services/payments";
 import { PaymentFormDialog } from "@/features/payments/payment-form-dialog";
 import { PaymentFormValues } from "@/features/payments/payment-schema";
 import { StatCard } from "@/components/shared/stat-card";
@@ -12,37 +16,58 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { excelExport } from "@/lib/excel-export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
-  AlertCircle,
   Search,
   Phone,
   PhoneCall,
   CreditCard,
   CheckCircle2,
-  Calendar,
   UsersRound,
   ShieldAlert,
-  ArrowRight,
   FileSpreadsheet,
+  Loader2,
 } from "lucide-react";
-import { formatDate, formatCurrency } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 
 export function DebtorListView() {
   const [debtors, setDebtors] = React.useState<DebtorInfo[]>([]);
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [students, setStudents] = React.useState<Student[]>([]);
+  const [summary, setSummary] = React.useState<MonthlyFinancialSummary>({
+    totalExpected: 0,
+    totalCollected: 0,
+    totalDebt: 0,
+    collectionRate: 0,
+    debtorsCount: 0,
+  });
+  const [loading, setLoading] = React.useState(true);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [groupFilter, setGroupFilter] = React.useState<string>("all");
 
   const [paymentDialogOpen, setPaymentDialogOpen] = React.useState(false);
   const [selectedStudentForPayment, setSelectedStudentForPayment] = React.useState<Student | null>(null);
 
-  const loadData = React.useCallback(() => {
-    setDebtors(crmStore.getDebtors());
-    setGroups(crmStore.getGroups());
-    setStudents(crmStore.getStudents());
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [dList, grList, stList, summ] = await Promise.all([
+        getDebtors(),
+        getGroups(),
+        getStudents(),
+        getMonthlyFinancialSummary(),
+      ]);
+      setDebtors(dList);
+      setGroups(grList);
+      setStudents(stList);
+      setSummary(summ);
+    } catch {
+      toast.error("Qarzdorlarni yuklashda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -62,8 +87,7 @@ export function DebtorListView() {
         studentPhone.includes(q) ||
         parentPhone.includes(q);
 
-      const matchesGroup =
-        groupFilter === "all" || d.groups.some((g) => g.id === groupFilter);
+      const matchesGroup = groupFilter === "all" || d.group.id === groupFilter;
 
       return matchesSearch && matchesGroup;
     });
@@ -76,7 +100,7 @@ export function DebtorListView() {
 
   const handleSavePayment = async (values: PaymentFormValues) => {
     try {
-      crmStore.savePayment({
+      await createPayment({
         student_id: values.student_id,
         group_id: values.group_id,
         amount: values.amount,
@@ -88,7 +112,7 @@ export function DebtorListView() {
       });
 
       toast.success("To‘lov qabul qilindi va qarzdorlik balansi yangilandi!");
-      loadData();
+      await loadData();
     } catch {
       toast.error("To‘lovni qabul qilishda xatolik");
     }
@@ -107,7 +131,6 @@ export function DebtorListView() {
   const totalDebtAmount = filteredDebtors.reduce((acc, d) => acc + d.debtAmount, 0);
   const totalDebtorsCount = filteredDebtors.length;
   const averageDebt = totalDebtorsCount > 0 ? Math.round(totalDebtAmount / totalDebtorsCount) : 0;
-  const summary = crmStore.getMonthlyFinancialSummary();
 
   return (
     <div className="space-y-6">
@@ -187,7 +210,12 @@ export function DebtorListView() {
       </div>
 
       {/* Debtors List */}
-      {filteredDebtors.length === 0 ? (
+      {loading ? (
+        <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs">Qarzdorlar ro‘yxati yuklanmoqda...</p>
+        </div>
+      ) : filteredDebtors.length === 0 ? (
         <EmptyState
           icon={CheckCircle2}
           title="Qarzdorlar mavjud emas!"
@@ -201,9 +229,9 @@ export function DebtorListView() {
                 <tr>
                   <th className="px-6 py-3.5 font-semibold">O‘quvchi</th>
                   <th className="px-4 py-3.5 font-semibold">Aloqa (Telefonlar)</th>
-                  <th className="px-4 py-3.5 font-semibold">Guruhlari</th>
-                  <th className="px-4 py-3.5 font-semibold">To‘lanmagan davr</th>
-                  <th className="px-4 py-3.5 font-semibold">Oxirgi to‘lov</th>
+                  <th className="px-4 py-3.5 font-semibold">Guruh</th>
+                  <th className="px-4 py-3.5 font-semibold">Oylik to‘lov</th>
+                  <th className="px-4 py-3.5 font-semibold">To‘langan</th>
                   <th className="px-4 py-3.5 font-semibold">Qarz summasi</th>
                   <th className="px-6 py-3.5 font-semibold text-right">Amallar</th>
                 </tr>
@@ -211,7 +239,7 @@ export function DebtorListView() {
               <tbody className="divide-y divide-border">
                 {filteredDebtors.map((d) => {
                   return (
-                    <tr key={d.student.id} className="hover:bg-muted/20 transition-colors">
+                    <tr key={`${d.student.id}_${d.group.id}`} className="hover:bg-muted/20 transition-colors">
                       {/* Student info */}
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-2.5">
@@ -254,30 +282,21 @@ export function DebtorListView() {
                         )}
                       </td>
 
-                      {/* Groups */}
+                      {/* Group */}
                       <td className="px-4 py-3.5">
-                        <div className="flex flex-wrap gap-1">
-                          {d.groups.map((g) => (
-                            <span
-                              key={g.id}
-                              className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-                            >
-                              {g.name}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-
-                      {/* Unpaid Months */}
-                      <td className="px-4 py-3.5">
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
-                          {d.unpaidMonths.join(", ") || "Joriy oy"}
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                          {d.group.name}
                         </span>
                       </td>
 
-                      {/* Last payment date */}
-                      <td className="px-4 py-3.5 text-xs text-muted-foreground font-mono">
-                        {d.lastPaymentDate ? formatDate(d.lastPaymentDate) : "To‘lov bo‘lmagan"}
+                      {/* Monthly Fee */}
+                      <td className="px-4 py-3.5 text-xs font-medium text-foreground">
+                        <MoneyDisplay amount={d.monthlyFee} size="sm" />
+                      </td>
+
+                      {/* Paid Amount */}
+                      <td className="px-4 py-3.5 text-xs text-muted-foreground">
+                        <MoneyDisplay amount={d.paidAmount} size="sm" variant="positive" />
                       </td>
 
                       {/* Debt Amount */}

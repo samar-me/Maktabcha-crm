@@ -3,7 +3,9 @@
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { Group, Student, Lesson, AttendanceStatus, Attendance } from "@/types/database";
-import { crmStore } from "@/services/crm-store";
+import { getGroups, getStudentsByGroupId } from "@/services/groups";
+import { getLessons, createLesson, updateLesson, getLessonById } from "@/services/lessons";
+import { getAttendance, saveBatchAttendance } from "@/services/attendance";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -20,10 +22,10 @@ import {
   HelpCircle,
   Save,
   Check,
-  Plus,
   UsersRound,
   History,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -50,64 +52,98 @@ export function AttendanceManager() {
   );
   const [attendanceRows, setAttendanceRows] = React.useState<StudentAttendanceRow[]>([]);
   const [saving, setSaving] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<string>("take");
+
+  const [allGroupAttendance, setAllGroupAttendance] = React.useState<Attendance[]>([]);
 
   // Load Groups on mount
   React.useEffect(() => {
-    const loadedGroups = crmStore.getGroups();
-    setGroups(loadedGroups);
+    async function initGroups() {
+      try {
+        const loadedGroups = await getGroups();
+        setGroups(loadedGroups);
 
-    if (loadedGroups.length > 0) {
-      const targetGroup = initialGroupId && loadedGroups.some((g) => g.id === initialGroupId)
-        ? initialGroupId
-        : loadedGroups[0].id;
-      setSelectedGroupId(targetGroup);
+        if (loadedGroups.length > 0) {
+          const targetGroup =
+            initialGroupId && loadedGroups.some((g) => g.id === initialGroupId)
+              ? initialGroupId
+              : loadedGroups[0].id;
+          setSelectedGroupId(targetGroup);
+        }
+      } catch {
+        toast.error("Guruhlarni yuklashda xatolik");
+      }
     }
+    initGroups();
   }, [initialGroupId]);
 
-  // Load lessons for selected group
+  // Load lessons & group attendance for selected group
   React.useEffect(() => {
     if (!selectedGroupId) return;
-    const groupLessons = crmStore.getLessons(selectedGroupId);
-    setLessons(groupLessons);
 
-    if (groupLessons.length > 0) {
-      const targetLesson =
-        initialLessonId && groupLessons.some((l) => l.id === initialLessonId)
-          ? initialLessonId
-          : groupLessons[0].id;
-      setSelectedLessonId(targetLesson);
+    async function loadGroupLessons() {
+      try {
+        const [groupLessons, groupAtt] = await Promise.all([
+          getLessons(selectedGroupId),
+          getAttendance({ groupId: selectedGroupId }),
+        ]);
 
-      const foundLesson = groupLessons.find((l) => l.id === targetLesson);
-      if (foundLesson) {
-        setAttendanceDate(foundLesson.date);
+        setLessons(groupLessons);
+        setAllGroupAttendance(groupAtt);
+
+        if (groupLessons.length > 0) {
+          const targetLesson =
+            initialLessonId && groupLessons.some((l) => l.id === initialLessonId)
+              ? initialLessonId
+              : groupLessons[0].id;
+          setSelectedLessonId(targetLesson);
+
+          const foundLesson = groupLessons.find((l) => l.id === targetLesson);
+          if (foundLesson) {
+            setAttendanceDate(foundLesson.date);
+          }
+        } else {
+          setSelectedLessonId("new");
+        }
+      } catch {
+        toast.error("Darslarni yuklashda xatolik");
       }
-    } else {
-      setSelectedLessonId("new");
     }
+    loadGroupLessons();
   }, [selectedGroupId, initialLessonId]);
 
   // Load students & existing attendance for selected group and lesson
   React.useEffect(() => {
     if (!selectedGroupId) return;
 
-    const groupStudents = crmStore.getStudentsByGroupId(selectedGroupId);
-    const existingAttendance =
-      selectedLessonId && selectedLessonId !== "new"
-        ? crmStore.getAttendance(selectedLessonId)
-        : [];
+    async function loadRosterAndAttendance() {
+      try {
+        setLoading(true);
+        const groupStudents = await getStudentsByGroupId(selectedGroupId);
+        const existingAttendance =
+          selectedLessonId && selectedLessonId !== "new"
+            ? await getAttendance({ lessonId: selectedLessonId })
+            : [];
 
-    const rows: StudentAttendanceRow[] = groupStudents.map((st) => {
-      const existing = existingAttendance.find((a) => a.student_id === st.id);
-      return {
-        student_id: st.id,
-        student: st,
-        status: existing ? existing.status : "Keldi",
-        note: existing?.note || "",
-      };
-    });
+        const rows: StudentAttendanceRow[] = groupStudents.map((st) => {
+          const existing = existingAttendance.find((a) => a.student_id === st.id);
+          return {
+            student_id: st.id,
+            student: st,
+            status: existing ? existing.status : "Keldi",
+            note: existing?.note || "",
+          };
+        });
 
-    setAttendanceRows(rows);
+        setAttendanceRows(rows);
+      } catch {
+        toast.error("Davomat ma'lumotlarini yuklashda xatolik");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadRosterAndAttendance();
   }, [selectedGroupId, selectedLessonId]);
 
   // Bulk action: Mark All Present
@@ -148,7 +184,7 @@ export function AttendanceManager() {
 
       // If "new", create a lesson first
       if (lessonIdToUse === "new" || !lessonIdToUse) {
-        const createdLesson = crmStore.saveLesson({
+        const createdLesson = await createLesson({
           group_id: selectedGroupId,
           date: attendanceDate,
           start_time: "14:00",
@@ -163,24 +199,32 @@ export function AttendanceManager() {
       }
 
       // Batch save attendance records
-      crmStore.saveAttendanceBatch(
-        lessonIdToUse,
-        selectedGroupId,
-        attendanceDate,
+      await saveBatchAttendance(
         attendanceRows.map((r) => ({
+          lesson_id: lessonIdToUse,
           student_id: r.student_id,
+          group_id: selectedGroupId,
+          date: attendanceDate,
           status: r.status,
-          note: r.note,
+          note: r.note || null,
         }))
       );
 
       // Update lesson status to "O‘tkazildi"
-      const currentLesson = crmStore.getLessonById(lessonIdToUse);
+      const currentLesson = await getLessonById(lessonIdToUse);
       if (currentLesson && currentLesson.status !== "O‘tkazildi") {
-        crmStore.saveLesson({ ...currentLesson, status: "O‘tkazildi" });
+        await updateLesson(lessonIdToUse, { status: "O‘tkazildi" });
       }
 
       toast.success("Davomat muvaffaqiyatli saqlandi!");
+
+      // Refresh lessons and attendance
+      const [updatedLessons, updatedAtt] = await Promise.all([
+        getLessons(selectedGroupId),
+        getAttendance({ groupId: selectedGroupId }),
+      ]);
+      setLessons(updatedLessons);
+      setAllGroupAttendance(updatedAtt);
     } catch {
       toast.error("Davomatni saqlashda xatolik yuz berdi");
     } finally {
@@ -199,9 +243,10 @@ export function AttendanceManager() {
       ? Math.round(((presentCount + lateCount * 0.8 + excusedCount) / totalStudents) * 100)
       : 100;
 
-  // Group overall attendance history
-  const groupStats = selectedGroupId ? crmStore.getGroupAttendanceStats(selectedGroupId) : null;
-  const allGroupAttendance = selectedGroupId ? crmStore.getAttendance(undefined, selectedGroupId) : [];
+  // Group overall attendance rate
+  const groupTotalAtt = allGroupAttendance.length;
+  const groupPresentCount = allGroupAttendance.filter((a) => a.status === "Keldi").length;
+  const groupRate = groupTotalAtt > 0 ? Math.round((groupPresentCount / groupTotalAtt) * 100) : 100;
 
   return (
     <div className="space-y-6">
@@ -334,7 +379,12 @@ export function AttendanceManager() {
           </div>
 
           {/* Student Roster Attendance List */}
-          {totalStudents === 0 ? (
+          {loading ? (
+            <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+              <p className="text-xs">Davomat yuklanmoqda...</p>
+            </div>
+          ) : totalStudents === 0 ? (
             <EmptyState
               icon={UsersRound}
               title="Guruhda o‘quvchilar mavjud emas"
@@ -483,7 +533,7 @@ export function AttendanceManager() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
               title="O‘rtacha ishtirok darajasi"
-              value={`${groupStats?.rate || 100}%`}
+              value={`${groupRate}%`}
               icon={TrendingUp}
               subtitle="Guruh umumiy davomati"
               iconColorClass="text-emerald-600 dark:text-emerald-400"
@@ -533,9 +583,8 @@ export function AttendanceManager() {
                     </thead>
                     <tbody className="divide-y divide-border">
                       {lessons.map((ls) => {
-                        const records = crmStore.getAttendance(ls.id);
+                        const records = allGroupAttendance.filter((a) => a.lesson_id === ls.id);
                         const present = records.filter((r) => r.status === "Keldi").length;
-                        const total = crmStore.getStudentsByGroupId(ls.group_id).length;
 
                         return (
                           <tr key={ls.id} className="hover:bg-muted/20">
@@ -546,7 +595,7 @@ export function AttendanceManager() {
                             <td className="px-4 py-3.5 text-xs text-muted-foreground">
                               {records.length > 0 ? (
                                 <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                                  {present} / {total} keldi
+                                  {present} / {records.length} keldi
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground italic">Davomat olinmagan</span>
