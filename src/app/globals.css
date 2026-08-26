@@ -102,3 +102,26 @@
 .animate-shake {
   animation: shake 0.4s ease-in-out;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  [role="dialog"], [role="dialog"] * {
+    visibility: visible;
+  }
+  [role="dialog"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  button, nav, aside {
+    display: none !important;
+  }
+}
+
