@@ -48,9 +48,9 @@ export function LessonDetailView({ lessonId }: LessonDetailViewProps) {
         setLesson(ls);
 
         const promises: Promise<any>[] = [
-          getGroupById(ls.group_id),
-          getStudentsByGroupId(ls.group_id),
-          getAttendance({ lessonId: ls.id }),
+          getGroupById(ls.group_id).catch(() => null),
+          getStudentsByGroupId(ls.group_id).catch(() => []),
+          getAttendance({ lessonId: ls.id }).catch(() => []),
         ];
 
         if (ls.curriculum_item_id) {
@@ -64,12 +64,12 @@ export function LessonDetailView({ lessonId }: LessonDetailViewProps) {
 
         const [grp, grpStudents, att, cItemRes] = await Promise.all(promises);
 
-        setGroup(grp);
-        setStudents(grpStudents);
-        setAttendance(att);
+        setGroup(grp || null);
+        setStudents(grpStudents || []);
+        setAttendance(att || []);
         if (cItemRes?.data) setCurriculumItem(cItemRes.data);
-      } catch {
-        toast.error("Dars ma'lumotlarini yuklashda xatolik");
+      } catch (err: any) {
+        console.error("Lesson detail load error:", err);
       } finally {
         setLoading(false);
       }

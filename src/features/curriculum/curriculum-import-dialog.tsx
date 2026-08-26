@@ -88,6 +88,7 @@ export function CurriculumImportDialog({
   const [step, setStep] = React.useState<1 | 2 | 3 | 4>(1);
 
   // File state
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [loadingStage, setLoadingStage] = React.useState<string>("Fayl tahlil qilinmoqda...");
@@ -580,20 +581,22 @@ export function CurriculumImportDialog({
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
-                      className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all flex flex-col items-center justify-center cursor-pointer ${
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all flex flex-col items-center justify-center cursor-pointer select-none ${
                         isDragging
                           ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 scale-[0.99]"
                           : "border-border hover:border-muted-foreground/50 bg-card/60"
                       }`}
                     >
                       <input
+                        ref={fileInputRef}
                         type="file"
                         accept={ACCEPTED_FILE_TYPES_ATTR}
                         onChange={(e) => {
                           const f = e.target.files?.[0];
                           if (f) handleAnalyzeFile(f);
                         }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        style={{ display: "none" }}
                       />
 
                       <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-3 shadow-inner">
@@ -608,7 +611,7 @@ export function CurriculumImportDialog({
                         aniqlaydi.
                       </p>
 
-                      <Button size="sm" className="pointer-events-none rounded-xl gap-2 text-xs">
+                      <Button size="sm" className="rounded-xl gap-2 text-xs">
                         <Upload className="w-3.5 h-3.5" />
                         <span>Fayl tanlash</span>
                       </Button>
