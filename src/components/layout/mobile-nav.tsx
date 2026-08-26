@@ -11,14 +11,12 @@ import {
   Menu,
   X,
   GraduationCap,
-  LogOut,
   Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navItems } from "./sidebar";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { logoutAction } from "@/actions/auth";
-import { crmStore } from "@/services/crm-store";
+import { logoutAction } from "@/actions/personal-auth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -36,15 +34,12 @@ export function MobileNav() {
 
   const handleSignOut = async () => {
     try {
-      crmStore.logout();
       await logoutAction();
       toast.success("Tizimdan muvaffaqiyatli chiqildi");
       setDrawerOpen(false);
       router.push("/login");
       router.refresh();
     } catch {
-      crmStore.logout();
-      await logoutAction();
       router.push("/login");
     }
   };

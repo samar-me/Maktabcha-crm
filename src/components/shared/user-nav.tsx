@@ -14,12 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
-import { crmStore } from "@/services/crm-store";
-import { LogOut, Settings, User, Shield, Lock } from "lucide-react";
+import { logoutAction } from "@/actions/personal-auth";
+import { Settings, Shield, Lock } from "lucide-react";
 import { toast } from "sonner";
-
-import { logoutAction } from "@/actions/auth";
 
 interface UserNavProps {
   userEmail?: string;
@@ -31,19 +28,14 @@ export function UserNav({
   userName = "Administrator",
 }: UserNavProps) {
   const router = useRouter();
-  const supabase = createClient();
 
   const handleSignOut = async () => {
     try {
-      crmStore.logout();
       await logoutAction();
-      await supabase.auth.signOut();
-      toast.success("Tizimdan muvaffaqiyatli chiqildi");
+      toast.success("Tizimdan chiqildi");
       router.push("/login");
       router.refresh();
     } catch {
-      crmStore.logout();
-      await logoutAction();
       router.push("/login");
     }
   };

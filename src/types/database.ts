@@ -448,6 +448,29 @@ export type Database = {
         };
         Relationships: [];
       };
+      personal_auth: {
+        Row: {
+          id: string;
+          pin_hash: string;
+          pin_salt: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          pin_hash: string;
+          pin_salt: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          pin_hash?: string;
+          pin_salt?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -476,6 +499,7 @@ export type HomeworkSubmission = Database["public"]["Tables"]["homework_submissi
 export type Grade = Database["public"]["Tables"]["grades"]["Row"];
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type SystemSettings = Database["public"]["Tables"]["settings"]["Row"];
+export type PersonalAuth = Database["public"]["Tables"]["personal_auth"]["Row"];
 
 export type StudentInsert = Database["public"]["Tables"]["students"]["Insert"];
 export type StudentUpdate = Database["public"]["Tables"]["students"]["Update"];

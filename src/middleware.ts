@@ -1,10 +1,12 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protected paths that require authentication
+  const { supabaseResponse, user } = await updateSession(request);
+
+  // Protected paths that require real Supabase authentication
   const protectedRoutes = [
     "/dashboard",
     "/students",
@@ -23,31 +25,28 @@ export function middleware(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
-  const session = request.cookies.get("maktabcha_session")?.value;
-  const isAuthenticated = session === "authenticated";
-
   // If user is accessing root "/", redirect to dashboard if authenticated, else to login
   if (pathname === "/") {
-    if (isAuthenticated) {
+    if (user) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     } else {
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
-  // If protected route and NOT authenticated, redirect immediately to /login
-  if (isProtected && !isAuthenticated) {
+  // If protected route and NOT authenticated in Supabase -> redirect to /login
+  if (isProtected && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // If user is already authenticated and visits /login, redirect to /dashboard
-  if (pathname === "/login" && isAuthenticated) {
+  // If user is already authenticated in Supabase and visits /login -> redirect to /dashboard
+  if (pathname === "/login" && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {
@@ -57,8 +56,8 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - favicon.ico, sitemap.xml, robots.txt, manifest.webmanifest (metadata files)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|manifest.webmanifest).*)",
   ],
 };

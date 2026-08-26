@@ -8,8 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { getSettings, updateSettings } from "@/services/settings";
-import { hasSavedPin, savePinHash, clearPin } from "@/lib/personal-auth";
-import { verifyMasterPasswordAction } from "@/actions/auth";
+import {
+  getPersonalAuthStatusAction,
+  changePinAction,
+  resetPinAction,
+  verifyMasterPasswordAction,
+} from "@/actions/personal-auth";
 import {
   Building2,
   Save,
@@ -42,7 +46,8 @@ export default function SettingsPage() {
   // Security / PIN state
   const [hasPin, setHasPin] = React.useState(false);
   const [isChangingPin, setIsChangingPin] = React.useState(false);
-  const [oldMasterPass, setOldMasterPass] = React.useState("");
+  const [isResettingPin, setIsResettingPin] = React.useState(false);
+  const [masterPassInput, setMasterPassInput] = React.useState("");
   const [newPinCode, setNewPinCode] = React.useState("");
   const [confirmNewPinCode, setConfirmNewPinCode] = React.useState("");
   const [pinLoading, setPinLoading] = React.useState(false);
@@ -51,16 +56,19 @@ export default function SettingsPage() {
     async function load() {
       try {
         setFetching(true);
-        const data = await getSettings();
+        const [settingsData, authStatus] = await Promise.all([
+          getSettings(),
+          getPersonalAuthStatusAction(),
+        ]);
         setSettings({
-          centerName: data.center_name,
-          adminName: data.admin_name,
-          phone: data.phone || "",
-          address: data.address || "",
-          defaultCurrency: data.default_currency,
-          defaultMonthlyFee: String(data.default_monthly_fee),
+          centerName: settingsData.center_name,
+          adminName: settingsData.admin_name,
+          phone: settingsData.phone || "",
+          address: settingsData.address || "",
+          defaultCurrency: settingsData.default_currency,
+          defaultMonthlyFee: String(settingsData.default_monthly_fee),
         });
-        setHasPin(hasSavedPin());
+        setHasPin(authStatus.configured);
       } catch {
         toast.error("Sozlamalarni yuklashda xatolik");
       } finally {
@@ -92,48 +100,66 @@ export default function SettingsPage() {
 
   const handleUpdatePin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!oldMasterPass.trim()) {
+    if (!masterPassInput.trim()) {
       toast.error("Iltimos, tasdiqlash uchun asosiy parolni kiriting");
+      return;
+    }
+
+    if (newPinCode.length !== 4 || isNaN(Number(newPinCode))) {
+      toast.error("PIN-kod aniq 4 ta raqamdan iborat bo‘lishi kerak");
+      return;
+    }
+
+    if (newPinCode !== confirmNewPinCode) {
+      toast.error("Yangi PIN-kodlar bir-biriga mos kelmadi");
       return;
     }
 
     setPinLoading(true);
     try {
-      const res = await verifyMasterPasswordAction(oldMasterPass);
+      const res = await changePinAction(masterPassInput, newPinCode);
       if (!res.success) {
-        toast.error(res.error || "Asosiy parol noto‘g‘ri kiritildi");
+        toast.error(res.error || "Asosiy parol noto‘g‘ri yoki xatolik yuz berdi");
         return;
       }
 
-      if (newPinCode.length !== 4 || isNaN(Number(newPinCode))) {
-        toast.error("PIN-kod aniq 4 ta raqamdan iborat bo‘lishi kerak");
-        return;
-      }
-
-      if (newPinCode !== confirmNewPinCode) {
-        toast.error("Yangi PIN-kodlar bir-biriga mos kelmadi");
-        return;
-      }
-
-      await savePinHash(newPinCode);
       setHasPin(true);
       setIsChangingPin(false);
-      setOldMasterPass("");
+      setMasterPassInput("");
       setNewPinCode("");
       setConfirmNewPinCode("");
-      toast.success("Yangi shaxsiy PIN-kodingiz muvaffaqiyatli saqlandi!");
+      toast.success("Yangi shaxsiy PIN-kodingiz saqlandi!");
     } catch {
-      toast.error("PIN-kodni yangilashda xatolik");
+      toast.error("PIN-kodni yangilashda xatolik yuz berdi");
     } finally {
       setPinLoading(false);
     }
   };
 
-  const handleResetPin = () => {
-    clearPin();
-    setHasPin(false);
-    setIsChangingPin(false);
-    toast.info("PIN-kod bekor qilindi. Endi kirishda yana asosiy parol so‘raladi.");
+  const handleResetPinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!masterPassInput.trim()) {
+      toast.error("Iltimos, asosiy parolni kiriting");
+      return;
+    }
+
+    setPinLoading(true);
+    try {
+      const res = await resetPinAction(masterPassInput);
+      if (!res.success) {
+        toast.error(res.error || "Asosiy parol noto‘g‘ri");
+        return;
+      }
+
+      setHasPin(false);
+      setIsResettingPin(false);
+      setMasterPassInput("");
+      toast.info("PIN-kod bekor qilindi. Endi kirishda asosiy parol so‘raladi.");
+    } catch {
+      toast.error("PIN-kodni o‘chirishda xatolik yuz berdi");
+    } finally {
+      setPinLoading(false);
+    }
   };
 
   return (
@@ -168,7 +194,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!isChangingPin ? (
+          {!isChangingPin && !isResettingPin ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card">
               <div>
                 <p className="text-sm font-semibold text-foreground">
@@ -176,7 +202,7 @@ export default function SettingsPage() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {hasPin
-                    ? "Dasturga kirishda faqat ushbu PIN-koddan foydalaniladi"
+                    ? "Dasturga kirishda faqat ushbu PIN-koddan foydalaniladi (barcha qurilmalarda bir xil)"
                     : "Dasturga kirishda asosiy maxfiy parol so‘raladi"}
                 </p>
               </div>
@@ -187,7 +213,10 @@ export default function SettingsPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={handleResetPin}
+                    onClick={() => {
+                      setMasterPassInput("");
+                      setIsResettingPin(true);
+                    }}
                     className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 h-9"
                   >
                     <RotateCcw className="w-3.5 h-3.5 mr-1" />
@@ -197,7 +226,12 @@ export default function SettingsPage() {
                 <Button
                   type="button"
                   size="sm"
-                  onClick={() => setIsChangingPin(true)}
+                  onClick={() => {
+                    setMasterPassInput("");
+                    setNewPinCode("");
+                    setConfirmNewPinCode("");
+                    setIsChangingPin(true);
+                  }}
                   className="text-xs gap-1.5 h-9"
                 >
                   <KeyRound className="w-3.5 h-3.5" />
@@ -205,6 +239,48 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </div>
+          ) : isResettingPin ? (
+            <form onSubmit={handleResetPinSubmit} className="space-y-4 p-4 rounded-xl border border-border bg-card">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                PIN-kodni bekor qilish uchun asosiy parolni kiriting
+              </h4>
+              <div className="max-w-xs space-y-1.5">
+                <Label htmlFor="resetMasterPass" className="text-xs">
+                  Asosiy Parol
+                </Label>
+                <Input
+                  id="resetMasterPass"
+                  type="password"
+                  value={masterPassInput}
+                  onChange={(e) => setMasterPassInput(e.target.value)}
+                  placeholder="Asosiy parolni kiriting..."
+                  required
+                  className="text-base sm:text-xs h-10 sm:h-9"
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsResettingPin(false)}
+                  disabled={pinLoading}
+                  className="text-xs h-9"
+                >
+                  Bekor qilish
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="destructive"
+                  disabled={pinLoading}
+                  className="text-xs gap-1 h-9"
+                >
+                  {pinLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>Bekor qilishni tasdiqlash</span>
+                </Button>
+              </div>
+            </form>
           ) : (
             <form onSubmit={handleUpdatePin} className="space-y-4 p-4 rounded-xl border border-border bg-card">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -213,14 +289,14 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="oldMasterPass" className="text-xs">
+                  <Label htmlFor="masterPassInput" className="text-xs">
                     Asosiy parol
                   </Label>
                   <Input
-                    id="oldMasterPass"
+                    id="masterPassInput"
                     type="password"
-                    value={oldMasterPass}
-                    onChange={(e) => setOldMasterPass(e.target.value)}
+                    value={masterPassInput}
+                    onChange={(e) => setMasterPassInput(e.target.value)}
                     placeholder="Asosiy parolni kiriting"
                     required
                     className="text-base sm:text-xs h-10 sm:h-9"

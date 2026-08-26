@@ -1,9 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { hasSavedPin, verifyPin, savePinHash } from "@/lib/personal-auth";
-import { loginAction, verifyMasterPasswordAction } from "@/actions/auth";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  getPersonalAuthStatusAction,
+  verifyMasterPasswordAction,
+  setupPinAction,
+  loginWithPinAction,
+} from "@/actions/personal-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,41 +26,56 @@ import { toast } from "sonner";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect") || "/dashboard";
 
   // Mode: "pin_entry" | "master_pass" | "create_pin"
   const [mode, setMode] = React.useState<"pin_entry" | "master_pass" | "create_pin">("master_pass");
   const [hasExistingPin, setHasExistingPin] = React.useState(false);
+  const [initialChecking, setInitialChecking] = React.useState(true);
 
   // Master password state
   const [masterPassword, setMasterPassword] = React.useState("");
   const [showMasterPass, setShowMasterPass] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
-  // PIN entry state (for existing PIN login)
+  // PIN entry state (for daily login)
   const [enteredPin, setEnteredPin] = React.useState("");
   const [isShaking, setIsShaking] = React.useState(false);
+  const [verifyingPin, setVerifyingPin] = React.useState(false);
 
-  // PIN creation state (first time setup)
+  // PIN creation state (first-time setup or reset)
   const [newPin, setNewPin] = React.useState("");
   const [confirmPin, setConfirmPin] = React.useState("");
   const [pinStep, setPinStep] = React.useState<"enter_new" | "confirm_new">("enter_new");
 
-  // Check PIN presence on mount
+  // Check server-side PIN configuration status on mount
   React.useEffect(() => {
-    const pinExists = hasSavedPin();
-    setHasExistingPin(pinExists);
-    if (pinExists) {
-      setMode("pin_entry");
-    } else {
-      setMode("master_pass");
+    async function checkStatus() {
+      try {
+        setInitialChecking(true);
+        const res = await getPersonalAuthStatusAction();
+        setHasExistingPin(res.configured);
+        if (res.configured) {
+          setMode("pin_entry");
+        } else {
+          setMode("master_pass");
+        }
+      } catch (e) {
+        console.error("Auth check failed:", e);
+        setMode("master_pass");
+      } finally {
+        setInitialChecking(false);
+      }
     }
+    checkStatus();
   }, []);
 
   // Handle master password submission
   const handleMasterPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!masterPassword.trim()) {
-      toast.error("Iltimos, parolni kiriting");
+      toast.error("Iltimos, asosiy parolni kiriting");
       return;
     }
 
@@ -64,7 +83,7 @@ export function LoginForm() {
     try {
       const res = await verifyMasterPasswordAction(masterPassword);
       if (res.success) {
-        toast.success("Asosiy parol tasdiqlandi! Endi o‘zingizga shaxsiy PIN-kod tanlang.");
+        toast.success("Asosiy parol tasdiqlandi! Endi shaxsiy PIN-kodni o‘rnating.");
         setMode("create_pin");
         setPinStep("enter_new");
         setNewPin("");
@@ -73,20 +92,22 @@ export function LoginForm() {
         toast.error(res.error || "Asosiy parol noto‘g‘ri. Qaytadan urinib ko‘ring.");
       }
     } catch {
-      toast.error("Parolni tekshirishda xatolik yuz berdi");
+      toast.error("Parolni tekshirishda kutilmagan xatolik yuz berdi");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle PIN input button click (Keypad or physical key)
+  // Handle keypad or physical key press
   const handleKeypadPress = (val: string) => {
+    if (verifyingPin || loading) return;
+
     if (mode === "pin_entry") {
       if (enteredPin.length < 4) {
         const updated = enteredPin + val;
         setEnteredPin(updated);
 
-        // Auto verify on 4 digits immediately
+        // Instant verification upon reaching 4 digits
         if (updated.length === 4) {
           verifyEnteredPin(updated);
         }
@@ -113,8 +134,10 @@ export function LoginForm() {
     }
   };
 
-  // Backspace press
+  // Backspace
   const handleBackspace = () => {
+    if (verifyingPin || loading) return;
+
     if (mode === "pin_entry") {
       setEnteredPin((prev) => prev.slice(0, -1));
     } else if (mode === "create_pin") {
@@ -126,8 +149,10 @@ export function LoginForm() {
     }
   };
 
-  // Clear press
+  // Clear
   const handleClear = () => {
+    if (verifyingPin || loading) return;
+
     if (mode === "pin_entry") {
       setEnteredPin("");
     } else if (mode === "create_pin") {
@@ -139,25 +164,36 @@ export function LoginForm() {
     }
   };
 
-  // Verify PIN for login (Instant)
+  // Daily PIN Login Verification
   const verifyEnteredPin = async (pinToTest: string) => {
-    const isValid = await verifyPin(pinToTest);
-    if (isValid) {
-      await loginAction();
-      toast.success("Xush kelibsiz! Tizimga muvaffaqiyatli kirdingiz.");
-      router.push("/dashboard");
-      router.refresh();
-    } else {
+    setVerifyingPin(true);
+    try {
+      const res = await loginWithPinAction(pinToTest);
+      if (res.success) {
+        toast.success("Xush kelibsiz! Tizimga muvaffaqiyatli kirdingiz.");
+        router.push(redirectPath);
+        router.refresh();
+      } else {
+        setIsShaking(true);
+        toast.error(res.error || "Kiritilgan PIN-kod noto‘g‘ri!");
+        setTimeout(() => {
+          setIsShaking(false);
+          setEnteredPin("");
+          setVerifyingPin(false);
+        }, 400);
+      }
+    } catch {
       setIsShaking(true);
-      toast.error("Kiritilgan PIN-kod noto‘g‘ri!");
+      toast.error("Tizimga kirishda xatolik yuz berdi");
       setTimeout(() => {
         setIsShaking(false);
         setEnteredPin("");
+        setVerifyingPin(false);
       }, 400);
     }
   };
 
-  // Save new PIN (Instant)
+  // Save new PIN (First time or Reset)
   const verifyAndSaveNewPin = async (firstPin: string, secondPin: string) => {
     if (firstPin !== secondPin) {
       setIsShaking(true);
@@ -171,14 +207,27 @@ export function LoginForm() {
       return;
     }
 
-    await savePinHash(firstPin);
-    await loginAction();
-    toast.success("Shaxsiy PIN-kodingiz muvaffaqiyatli saqlandi!");
-    router.push("/dashboard");
-    router.refresh();
+    setLoading(true);
+    try {
+      const res = await setupPinAction(masterPassword, firstPin);
+      if (res.success) {
+        toast.success("Shaxsiy PIN-kodingiz saqlandi va tizimga kirildi!");
+        router.push(redirectPath);
+        router.refresh();
+      } else {
+        toast.error(res.error || "PIN-kodni saqlashda xatolik yuz berdi");
+        setPinStep("enter_new");
+        setNewPin("");
+        setConfirmPin("");
+      }
+    } catch {
+      toast.error("Kutilmagan xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Global Keyboard listener for digits
+  // Physical keyboard listener for digits
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (mode === "master_pass") return;
@@ -194,7 +243,16 @@ export function LoginForm() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mode, enteredPin, newPin, confirmPin, pinStep]);
+  }, [mode, enteredPin, newPin, confirmPin, pinStep, verifyingPin, loading]);
+
+  if (initialChecking) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        <p className="text-xs font-medium">Xavfsizlik holati tekshirilmoqda...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 max-w-sm mx-auto">
@@ -210,7 +268,7 @@ export function LoginForm() {
             </h2>
             <p className="text-xs text-muted-foreground">
               {hasExistingPin
-                ? "PIN-kodni tiklash yoki yangilash uchun asosiy parolni kiriting"
+                ? "PIN-kodni yangilash yoki qayta o‘rnatish uchun asosiy parolni kiriting"
                 : "Boshlang‘ich administrator parolini kiriting"}
             </p>
           </div>
@@ -314,31 +372,35 @@ export function LoginForm() {
               <button
                 key={num}
                 type="button"
+                disabled={loading}
                 onClick={() => handleKeypadPress(num)}
-                className="h-12 rounded-xl text-lg font-bold bg-muted/40 hover:bg-muted/80 active:scale-95 transition-all text-foreground border border-border/60 shadow-xs"
+                className="h-12 rounded-xl text-lg font-bold bg-muted/40 hover:bg-muted/80 active:scale-95 transition-all text-foreground border border-border/60 shadow-xs disabled:opacity-50"
               >
                 {num}
               </button>
             ))}
             <button
               type="button"
+              disabled={loading}
               onClick={handleClear}
-              className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40"
+              className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40 disabled:opacity-50"
             >
               Tozalash
             </button>
             <button
               type="button"
+              disabled={loading}
               onClick={() => handleKeypadPress("0")}
-              className="h-12 rounded-xl text-lg font-bold bg-muted/40 hover:bg-muted/80 active:scale-95 transition-all text-foreground border border-border/60 shadow-xs"
+              className="h-12 rounded-xl text-lg font-bold bg-muted/40 hover:bg-muted/80 active:scale-95 transition-all text-foreground border border-border/60 shadow-xs disabled:opacity-50"
             >
               0
             </button>
             <button
               type="button"
+              disabled={loading}
               onClick={handleBackspace}
               aria-label="O‘chirish"
-              className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40"
+              className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40 disabled:opacity-50"
             >
               <Delete className="w-5 h-5" />
             </button>
@@ -400,31 +462,35 @@ export function LoginForm() {
               <button
                 key={num}
                 type="button"
+                disabled={verifyingPin}
                 onClick={() => handleKeypadPress(num)}
-                className="h-12 rounded-xl text-lg font-bold bg-muted/40 hover:bg-muted/80 active:scale-95 transition-all text-foreground border border-border/60 shadow-xs"
+                className="h-12 rounded-xl text-lg font-bold bg-muted/40 hover:bg-muted/80 active:scale-95 transition-all text-foreground border border-border/60 shadow-xs disabled:opacity-50"
               >
                 {num}
               </button>
             ))}
             <button
               type="button"
+              disabled={verifyingPin}
               onClick={handleClear}
-              className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40"
+              className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40 disabled:opacity-50"
             >
               C
             </button>
             <button
               type="button"
+              disabled={verifyingPin}
               onClick={() => handleKeypadPress("0")}
-              className="h-12 rounded-xl text-lg font-bold bg-muted/40 hover:bg-muted/80 active:scale-95 transition-all text-foreground border border-border/60 shadow-xs"
+              className="h-12 rounded-xl text-lg font-bold bg-muted/40 hover:bg-muted/80 active:scale-95 transition-all text-foreground border border-border/60 shadow-xs disabled:opacity-50"
             >
               0
             </button>
             <button
               type="button"
+              disabled={verifyingPin}
               onClick={handleBackspace}
               aria-label="O‘chirish"
-              className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40"
+              className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40 disabled:opacity-50"
             >
               <Delete className="w-5 h-5" />
             </button>

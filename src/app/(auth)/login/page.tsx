@@ -1,6 +1,6 @@
 import * as React from "react";
 import { LoginForm } from "@/features/auth/login-form";
-import { GraduationCap, ShieldCheck } from "lucide-react";
+import { GraduationCap, ShieldCheck, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -21,7 +21,16 @@ export default function LoginPage() {
       </div>
 
       <div className="p-6 sm:p-8 rounded-2xl border border-border bg-card shadow-sm text-card-foreground">
-        <LoginForm />
+        <React.Suspense
+          fallback={
+            <div className="p-8 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+              <p className="text-xs font-medium">Yuklanmoqda...</p>
+            </div>
+          }
+        >
+          <LoginForm />
+        </React.Suspense>
       </div>
 
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
