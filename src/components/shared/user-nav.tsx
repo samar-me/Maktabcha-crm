@@ -19,6 +19,8 @@ import { crmStore } from "@/services/crm-store";
 import { LogOut, Settings, User, Shield, Lock } from "lucide-react";
 import { toast } from "sonner";
 
+import { logoutAction } from "@/actions/auth";
+
 interface UserNavProps {
   userEmail?: string;
   userName?: string;
@@ -34,12 +36,14 @@ export function UserNav({
   const handleSignOut = async () => {
     try {
       crmStore.logout();
+      await logoutAction();
       await supabase.auth.signOut();
       toast.success("Tizimdan muvaffaqiyatli chiqildi");
       router.push("/login");
       router.refresh();
     } catch {
       crmStore.logout();
+      await logoutAction();
       router.push("/login");
     }
   };

@@ -6,6 +6,7 @@ import { crmStore } from "@/services/crm-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { loginAction } from "@/actions/auth";
 import {
   Lock,
   KeyRound,
@@ -133,9 +134,10 @@ export function LoginForm() {
   };
 
   // Verify PIN for login (Instant)
-  const verifyEnteredPin = (pinToTest: string) => {
+  const verifyEnteredPin = async (pinToTest: string) => {
     if (crmStore.verifyPinCode(pinToTest)) {
       crmStore.login();
+      await loginAction();
       toast.success("Xush kelibsiz! Tizimga muvaffaqiyatli kirdingiz.");
       router.push("/dashboard");
       router.refresh();
@@ -150,7 +152,7 @@ export function LoginForm() {
   };
 
   // Save new PIN (Instant)
-  const verifyAndSaveNewPin = (firstPin: string, secondPin: string) => {
+  const verifyAndSaveNewPin = async (firstPin: string, secondPin: string) => {
     if (firstPin !== secondPin) {
       setIsShaking(true);
       toast.error("PIN-kodlar bir-biriga mos kelmadi. Qaytadan kiriting.");
@@ -165,6 +167,7 @@ export function LoginForm() {
 
     crmStore.setPinCode(firstPin);
     crmStore.login();
+    await loginAction();
     toast.success("Shaxsiy PIN-kodingiz muvaffaqiyatli saqlandi!");
     router.push("/dashboard");
     router.refresh();

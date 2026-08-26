@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { crmStore } from "@/services/crm-store";
 import { useRouter } from "next/navigation";
+import { logoutAction } from "@/actions/auth";
 import { toast } from "sonner";
 
 export interface NavItem {
@@ -99,12 +100,14 @@ export function Sidebar() {
   const handleSignOut = async () => {
     try {
       crmStore.logout();
+      await logoutAction();
       await supabase.auth.signOut();
       toast.success("Tizim qulflab qo‘yildi!");
       router.push("/login");
       router.refresh();
     } catch {
       crmStore.logout();
+      await logoutAction();
       router.push("/login");
     }
   };
