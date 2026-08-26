@@ -288,14 +288,47 @@ export function ReportsView() {
             </Card>
           </div>
 
-          {/* Group Financial Breakdown Table */}
+          {/* Group Financial Breakdown Table / Mobile Cards */}
           <Card className="shadow-sm overflow-hidden border-border/80">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-bold">Guruhlar Kesimida Moliyaviy Tahlil</CardTitle>
               <CardDescription className="text-xs">Har bir guruh bo‘yicha o‘quvchilar soni, tarif va tushum</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              {/* Mobile Cards (md:hidden) */}
+              <div className="divide-y divide-border md:hidden">
+                {groups.map((grp) => {
+                  const studentCount = groupStudentCountMap.get(grp.id) || 0;
+                  const expected = studentCount * Number(grp.monthly_fee);
+                  const groupPayments = payments.filter((p) => p.group_id === grp.id);
+                  const collected = groupPayments.reduce((acc, p) => acc + Number(p.amount), 0);
+
+                  return (
+                    <div key={grp.id} className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-foreground">{grp.name}</span>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(collected)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">O‘qituvchi: {grp.teacher_name}</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/60">
+                        <div>
+                          <span className="text-[11px] text-muted-foreground block">O‘quvchilar:</span>
+                          <span className="font-semibold text-foreground">{studentCount} nafar</span>
+                        </div>
+                        <div>
+                          <span className="text-[11px] text-muted-foreground block">Kutilgan:</span>
+                          <span className="font-semibold text-foreground">{formatCurrency(expected)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table (hidden md:block) */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs uppercase bg-muted/40 text-muted-foreground border-b border-border">
                     <tr>

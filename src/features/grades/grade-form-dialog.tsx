@@ -217,15 +217,17 @@ export function GradeFormDialog({
           </div>
 
           {/* Scores */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="score">
+              <Label htmlFor="score" className="text-xs font-semibold">
                 To‘plangan ball <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="score"
                 type="number"
+                inputMode="numeric"
                 disabled={loading}
+                className="h-10 sm:h-9 text-base sm:text-xs font-mono"
                 {...register("score")}
               />
               {errors.score && (
@@ -234,11 +236,13 @@ export function GradeFormDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="max_score">Maksimal ball</Label>
+              <Label htmlFor="max_score" className="text-xs font-semibold">Maksimal ball</Label>
               <Input
                 id="max_score"
                 type="number"
+                inputMode="numeric"
                 disabled={loading}
+                className="h-10 sm:h-9 text-base sm:text-xs font-mono"
                 {...register("max_score")}
               />
             </div>

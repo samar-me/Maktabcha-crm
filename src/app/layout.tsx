@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -6,9 +6,29 @@ import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#090d16" },
+  ],
+};
+
 export const metadata: Metadata = {
   title: "Maktabcha CRM — O‘quv markazni boshqarish tizimi",
   description: "O‘quvchilar, guruhlar, to‘lovlar, davomat va hisobotlarni boshqarish uchun zamonaviy CRM tizimi",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Maktabcha CRM",
+  },
+  formatDetection: {
+    telephone: true,
+  },
 };
 
 export default function RootLayout({
@@ -18,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uz" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} antialiased min-h-[100dvh]`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

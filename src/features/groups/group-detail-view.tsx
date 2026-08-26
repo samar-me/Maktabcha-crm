@@ -40,6 +40,7 @@ import {
   AlertCircle,
   FileSpreadsheet,
   Loader2,
+  Phone,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -334,65 +335,119 @@ export function GroupDetailView({ groupId }: GroupDetailViewProps) {
               onAction={() => setAddStudentDialogOpen(true)}
             />
           ) : (
-            <Card className="shadow-sm overflow-hidden border-border/80">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs uppercase bg-muted/40 text-muted-foreground border-b border-border">
-                    <tr>
-                      <th className="px-6 py-3.5 font-semibold">O‘quvchi</th>
-                      <th className="px-4 py-3.5 font-semibold">Telefon</th>
-                      <th className="px-4 py-3.5 font-semibold">Ota-onasi</th>
-                      <th className="px-4 py-3.5 font-semibold">Holati</th>
-                      <th className="px-6 py-3.5 font-semibold text-right">Amallar</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {students.map((st) => (
-                      <tr key={st.id} className="hover:bg-muted/20 transition-colors">
-                        <td className="px-6 py-4">
-                          <Link href={`/students/${st.id}`} className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center">
-                              {st.first_name[0]}
-                            </div>
-                            <span className="font-semibold text-foreground hover:text-blue-600 transition-colors">
-                              {st.first_name} {st.last_name || ""}
-                            </span>
-                          </Link>
-                        </td>
+            <>
+              {/* Mobile Student Cards (md:hidden) */}
+              <div className="grid grid-cols-1 gap-3 md:hidden">
+                {students.map((st) => (
+                  <Card key={st.id} className="p-4 space-y-3 border border-border shadow-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link href={`/students/${st.id}`} className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0">
+                          {st.first_name[0]}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="font-bold text-foreground text-sm block truncate">
+                            {st.first_name} {st.last_name || ""}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {st.parent_name ? `Ota-onasi: ${st.parent_name}` : ""}
+                          </span>
+                        </div>
+                      </Link>
+                      <StatusBadge status={st.status} />
+                    </div>
 
-                        <td className="px-4 py-4 font-mono text-xs text-muted-foreground">
-                          {st.phone || "—"}
-                        </td>
+                    {st.phone && (
+                      <div className="pt-2 border-t border-border/60 text-xs">
+                        <a href={`tel:${st.phone}`} className="flex items-center gap-1.5 font-mono text-blue-600">
+                          <Phone className="w-3.5 h-3.5" />
+                          <span>{st.phone}</span>
+                        </a>
+                      </div>
+                    )}
 
-                        <td className="px-4 py-4 text-xs">
-                          <p className="font-medium text-foreground">{st.parent_name || "—"}</p>
-                          <p className="text-muted-foreground font-mono text-[11px]">{st.parent_phone || ""}</p>
-                        </td>
-
-                        <td className="px-4 py-4">
-                          <StatusBadge status={st.status} />
-                        </td>
-
-                        <td className="px-6 py-4 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setStudentToRemove(st);
-                              setRemoveConfirmOpen(true);
-                            }}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs h-8"
-                          >
-                            <UserMinus className="w-4 h-4 mr-1" />
-                            <span>Guruhdan chiqarish</span>
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    <div className="flex items-center justify-between pt-2 border-t border-border/60 gap-2">
+                      <Button asChild variant="outline" size="sm" className="h-8 text-xs flex-1">
+                        <Link href={`/students/${st.id}`}>Profil</Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setStudentToRemove(st);
+                          setRemoveConfirmOpen(true);
+                        }}
+                        className="h-8 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                      >
+                        <UserMinus className="w-3.5 h-3.5 mr-1" />
+                        <span>Chiqarish</span>
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
               </div>
-            </Card>
+
+              {/* Desktop Table (hidden md:block) */}
+              <Card className="hidden md:block shadow-sm overflow-hidden border-border/80">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs uppercase bg-muted/40 text-muted-foreground border-b border-border">
+                      <tr>
+                        <th className="px-6 py-3.5 font-semibold">O‘quvchi</th>
+                        <th className="px-4 py-3.5 font-semibold">Telefon</th>
+                        <th className="px-4 py-3.5 font-semibold">Ota-onasi</th>
+                        <th className="px-4 py-3.5 font-semibold">Holati</th>
+                        <th className="px-6 py-3.5 font-semibold text-right">Amallar</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {students.map((st) => (
+                        <tr key={st.id} className="hover:bg-muted/20 transition-colors">
+                          <td className="px-6 py-4">
+                            <Link href={`/students/${st.id}`} className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center">
+                                {st.first_name[0]}
+                              </div>
+                              <span className="font-semibold text-foreground hover:text-blue-600 transition-colors">
+                                {st.first_name} {st.last_name || ""}
+                              </span>
+                            </Link>
+                          </td>
+
+                          <td className="px-4 py-4 font-mono text-xs text-muted-foreground">
+                            {st.phone || "—"}
+                          </td>
+
+                          <td className="px-4 py-4 text-xs">
+                            <p className="font-medium text-foreground">{st.parent_name || "—"}</p>
+                            <p className="text-muted-foreground font-mono text-[11px]">{st.parent_phone || ""}</p>
+                          </td>
+
+                          <td className="px-4 py-4">
+                            <StatusBadge status={st.status} />
+                          </td>
+
+                          <td className="px-6 py-4 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setStudentToRemove(st);
+                                setRemoveConfirmOpen(true);
+                              }}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs h-8"
+                            >
+                              <UserMinus className="w-4 h-4 mr-1" />
+                              <span>Guruhdan chiqarish</span>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </>
           )}
         </TabsContent>
 

@@ -2,23 +2,21 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { crmStore } from "@/services/crm-store";
+import { hasSavedPin, verifyPin, savePinHash } from "@/lib/personal-auth";
+import { loginAction, verifyMasterPasswordAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginAction } from "@/actions/auth";
 import {
   Lock,
   KeyRound,
-  ShieldCheck,
   ArrowRight,
   Eye,
   EyeOff,
   RotateCcw,
-  CheckCircle2,
-  AlertCircle,
   Delete,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,7 +43,7 @@ export function LoginForm() {
 
   // Check PIN presence on mount
   React.useEffect(() => {
-    const pinExists = crmStore.hasPinCode();
+    const pinExists = hasSavedPin();
     setHasExistingPin(pinExists);
     if (pinExists) {
       setMode("pin_entry");
@@ -55,21 +53,29 @@ export function LoginForm() {
   }, []);
 
   // Handle master password submission
-  const handleMasterPasswordSubmit = (e: React.FormEvent) => {
+  const handleMasterPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!masterPassword.trim()) {
       toast.error("Iltimos, parolni kiriting");
       return;
     }
 
-    if (crmStore.verifyMasterPassword(masterPassword)) {
-      toast.success("Asosiy parol tasdiqlandi! Endi o‘zingizga shaxsiy PIN-kod tanlang.");
-      setMode("create_pin");
-      setPinStep("enter_new");
-      setNewPin("");
-      setConfirmPin("");
-    } else {
-      toast.error("Asosiy parol noto‘g‘ri. Qaytadan urinib ko‘ring.");
+    setLoading(true);
+    try {
+      const res = await verifyMasterPasswordAction(masterPassword);
+      if (res.success) {
+        toast.success("Asosiy parol tasdiqlandi! Endi o‘zingizga shaxsiy PIN-kod tanlang.");
+        setMode("create_pin");
+        setPinStep("enter_new");
+        setNewPin("");
+        setConfirmPin("");
+      } else {
+        toast.error(res.error || "Asosiy parol noto‘g‘ri. Qaytadan urinib ko‘ring.");
+      }
+    } catch {
+      toast.error("Parolni tekshirishda xatolik yuz berdi");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -135,8 +141,8 @@ export function LoginForm() {
 
   // Verify PIN for login (Instant)
   const verifyEnteredPin = async (pinToTest: string) => {
-    if (crmStore.verifyPinCode(pinToTest)) {
-      crmStore.login();
+    const isValid = await verifyPin(pinToTest);
+    if (isValid) {
       await loginAction();
       toast.success("Xush kelibsiz! Tizimga muvaffaqiyatli kirdingiz.");
       router.push("/dashboard");
@@ -165,8 +171,7 @@ export function LoginForm() {
       return;
     }
 
-    crmStore.setPinCode(firstPin);
-    crmStore.login();
+    await savePinHash(firstPin);
     await loginAction();
     toast.success("Shaxsiy PIN-kodingiz muvaffaqiyatli saqlandi!");
     router.push("/dashboard");
@@ -192,12 +197,12 @@ export function LoginForm() {
   }, [mode, enteredPin, newPin, confirmPin, pinStep]);
 
   return (
-    <div className="space-y-6">
-      {/* 1. MASTER PASSWORD FORM (First-time or Reset Mode) */}
+    <div className="space-y-5 max-w-sm mx-auto">
+      {/* 1. MASTER PASSWORD FORM */}
       {mode === "master_pass" && (
-        <form onSubmit={handleMasterPasswordSubmit} className="space-y-5">
+        <form onSubmit={handleMasterPasswordSubmit} className="space-y-4">
           <div className="text-center space-y-1">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 mx-auto flex items-center justify-center mb-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 mx-auto flex items-center justify-center mb-1">
               <KeyRound className="w-5 h-5" />
             </div>
             <h2 className="text-base font-bold text-foreground">
@@ -210,7 +215,7 @@ export function LoginForm() {
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="masterPassword" className="text-xs font-semibold">
               Asosiy Parol
             </Label>
@@ -221,14 +226,15 @@ export function LoginForm() {
                 value={masterPassword}
                 onChange={(e) => setMasterPassword(e.target.value)}
                 placeholder="Maxfiy parolni kiriting..."
-                className="pr-10 text-sm h-11"
+                className="pr-10 text-base sm:text-sm h-11"
                 required
                 autoFocus
               />
               <button
                 type="button"
                 onClick={() => setShowMasterPass(!showMasterPass)}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                aria-label={showMasterPass ? "Parolni yashirish" : "Parolni ko‘rsatish"}
+                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground p-1"
               >
                 {showMasterPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -236,8 +242,17 @@ export function LoginForm() {
           </div>
 
           <Button type="submit" disabled={loading} className="w-full h-11 gap-2 text-sm font-semibold">
-            <span>{loading ? "Tekshirilmoqda..." : "Kirish va PIN-kodni o‘rnatish"}</span>
-            <ArrowRight className="w-4 h-4" />
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Tekshirilmoqda...</span>
+              </>
+            ) : (
+              <>
+                <span>Kirish va PIN-kodni o‘rnatish</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </Button>
 
           {hasExistingPin && (
@@ -248,7 +263,7 @@ export function LoginForm() {
                   setEnteredPin("");
                   setMode("pin_entry");
                 }}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-medium"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-medium p-2"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>Mavjud PIN-kod orqali kirish</span>
@@ -260,9 +275,9 @@ export function LoginForm() {
 
       {/* 2. CREATE PIN CODE SCREEN */}
       {mode === "create_pin" && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="text-center space-y-1">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center mb-1">
               <Sparkles className="w-5 h-5" />
             </div>
             <h2 className="text-base font-bold text-foreground">
@@ -276,7 +291,7 @@ export function LoginForm() {
           </div>
 
           {/* Dots representation */}
-          <div className={`flex justify-center items-center gap-4 py-2 ${isShaking ? "animate-bounce" : ""}`}>
+          <div className={`flex justify-center items-center gap-3.5 py-1 ${isShaking ? "animate-bounce" : ""}`}>
             {[0, 1, 2, 3].map((index) => {
               const currentLength = pinStep === "enter_new" ? newPin.length : confirmPin.length;
               const isFilled = index < currentLength;
@@ -294,7 +309,7 @@ export function LoginForm() {
           </div>
 
           {/* Numeric Keypad */}
-          <div className="grid grid-cols-3 gap-2.5 max-w-[260px] mx-auto pt-2">
+          <div className="grid grid-cols-3 gap-2 max-w-[260px] mx-auto pt-1">
             {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
               <button
                 key={num}
@@ -322,6 +337,7 @@ export function LoginForm() {
             <button
               type="button"
               onClick={handleBackspace}
+              aria-label="O‘chirish"
               className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40"
             >
               <Delete className="w-5 h-5" />
@@ -329,7 +345,7 @@ export function LoginForm() {
           </div>
 
           {pinStep === "confirm_new" && (
-            <div className="text-center pt-2">
+            <div className="text-center pt-1">
               <button
                 type="button"
                 onClick={() => {
@@ -337,7 +353,7 @@ export function LoginForm() {
                   setNewPin("");
                   setConfirmPin("");
                 }}
-                className="text-xs text-muted-foreground hover:text-foreground underline"
+                className="text-xs text-muted-foreground hover:text-foreground underline p-2"
               >
                 Boshidan kiritish
               </button>
@@ -346,11 +362,11 @@ export function LoginForm() {
         </div>
       )}
 
-      {/* 3. PIN CODE LOCK SCREEN (Main daily workflow) */}
+      {/* 3. PIN CODE LOCK SCREEN */}
       {mode === "pin_entry" && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="text-center space-y-1">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 mx-auto flex items-center justify-center mb-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 mx-auto flex items-center justify-center mb-1">
               <Lock className="w-5 h-5" />
             </div>
             <h2 className="text-base font-bold text-foreground">
@@ -362,7 +378,7 @@ export function LoginForm() {
           </div>
 
           {/* Dots Indicator */}
-          <div className={`flex justify-center items-center gap-4 py-2 ${isShaking ? "animate-shake" : ""}`}>
+          <div className={`flex justify-center items-center gap-3.5 py-1 ${isShaking ? "animate-shake" : ""}`}>
             {[0, 1, 2, 3].map((index) => {
               const isFilled = index < enteredPin.length;
               return (
@@ -379,7 +395,7 @@ export function LoginForm() {
           </div>
 
           {/* Numeric Keypad */}
-          <div className="grid grid-cols-3 gap-2.5 max-w-[260px] mx-auto pt-2">
+          <div className="grid grid-cols-3 gap-2 max-w-[260px] mx-auto pt-1">
             {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
               <button
                 key={num}
@@ -407,21 +423,22 @@ export function LoginForm() {
             <button
               type="button"
               onClick={handleBackspace}
+              aria-label="O‘chirish"
               className="h-12 rounded-xl text-xs font-semibold bg-muted/20 hover:bg-muted/50 text-muted-foreground active:scale-95 transition-all flex items-center justify-center border border-border/40"
             >
               <Delete className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Recovery / Reset via Master Password */}
-          <div className="text-center pt-2 border-t border-border/60">
+          {/* Recovery via Master Password */}
+          <div className="text-center pt-1 border-t border-border/60">
             <button
               type="button"
               onClick={() => {
                 setMasterPassword("");
                 setMode("master_pass");
               }}
-              className="text-xs text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-colors inline-flex items-center gap-1.5"
+              className="text-xs text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-colors inline-flex items-center gap-1.5 p-2"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Asosiy parol orqali kirish / PIN-kodni yangilash</span>

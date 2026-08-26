@@ -35,6 +35,8 @@ import {
   Clock,
   UserX,
   Loader2,
+  User,
+  RotateCcw,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -44,6 +46,7 @@ export function StudentListView() {
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [enrollments, setEnrollments] = React.useState<GroupStudent[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
@@ -58,6 +61,7 @@ export function StudentListView() {
   const loadData = React.useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const [stList, grList, enrList] = await Promise.all([
         getStudents(),
         getGroups(),
@@ -66,7 +70,8 @@ export function StudentListView() {
       setStudents(stList);
       setGroups(grList);
       setEnrollments(enrList);
-    } catch (err: any) {
+    } catch {
+      setError("O‘quvchilar ro‘yxatini yuklashda xatolik yuz berdi");
       toast.error("Ma'lumotlarni yuklashda xatolik yuz berdi");
     } finally {
       setLoading(false);
@@ -193,26 +198,26 @@ export function StudentListView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Controls Bar: Search, Filters & Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="flex-1 flex flex-col sm:flex-row gap-2.5">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5 pointer-events-none" />
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-3 pointer-events-none" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Ism, telefon yoki ota-onasi bo‘yicha qidirish..."
-              className="pl-9 text-sm"
+              className="pl-9 text-base sm:text-sm h-11 sm:h-9"
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Holat bo‘yicha filtrlash"
-              className="h-9 px-3 rounded-lg border border-input bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-10 sm:h-9 px-3 rounded-xl border border-input bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring flex-1 sm:flex-initial"
             >
               <option value="all">Barcha holatlar</option>
               <option value="Faol">Faol</option>
@@ -225,7 +230,7 @@ export function StudentListView() {
               value={groupFilter}
               onChange={(e) => setGroupFilter(e.target.value)}
               aria-label="Guruh bo‘yicha filtrlash"
-              className="h-9 px-3 rounded-lg border border-input bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-10 sm:h-9 px-3 rounded-xl border border-input bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring flex-1 sm:flex-initial"
             >
               <option value="all">Barcha guruhlar</option>
               {groups.map((grp) => (
@@ -237,43 +242,54 @@ export function StudentListView() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExportExcel}
-            className="gap-2 shrink-0 text-xs h-9"
-            size="sm"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>Excelga yuklash</span>
-          </Button>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground">
+            Jami: <strong className="text-foreground font-bold">{filteredStudents.length}</strong> nafar
+          </span>
 
-          <Button
-            onClick={() => {
-              setEditingStudent(null);
-              setFormDialogOpen(true);
-            }}
-            className="gap-2 shrink-0 text-xs h-9"
-            size="sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>O‘quvchi qo‘shish</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExportExcel}
+              className="gap-1.5 shrink-0 text-xs h-9"
+              size="sm"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <span className="hidden sm:inline">Excelga yuklash</span>
+              <span className="sm:hidden">Excel</span>
+            </Button>
+
+            <Button
+              onClick={() => {
+                setEditingStudent(null);
+                setFormDialogOpen(true);
+              }}
+              className="gap-1.5 shrink-0 text-xs h-9 font-semibold"
+              size="sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Yangi o‘quvchi</span>
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Summary info */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-        <span>
-          Jami: <strong className="text-foreground">{filteredStudents.length}</strong> nafar o‘quvchi ko‘rsatilmoqda
-        </span>
-      </div>
+      {/* Error state */}
+      {error && (
+        <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 flex items-center justify-between">
+          <span className="text-xs font-medium">{error}</span>
+          <Button variant="outline" size="sm" onClick={loadData} className="text-xs h-8 gap-1">
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Qayta urinish</span>
+          </Button>
+        </div>
+      )}
 
       {/* Main Student List / Table */}
       {loading ? (
         <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-          <p className="text-xs">O‘quvchilar ro‘yxati yuklanmoqda...</p>
+          <p className="text-xs font-medium">O‘quvchilar ro‘yxati yuklanmoqda...</p>
         </div>
       ) : filteredStudents.length === 0 ? (
         <EmptyState
@@ -297,158 +313,261 @@ export function StudentListView() {
           }}
         />
       ) : (
-        <Card className="shadow-sm overflow-hidden border-border/80">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs uppercase bg-muted/40 text-muted-foreground border-b border-border">
-                <tr>
-                  <th className="px-6 py-3.5 font-semibold">O‘quvchi</th>
-                  <th className="px-4 py-3.5 font-semibold">Telefon</th>
-                  <th className="px-4 py-3.5 font-semibold">Ota-onasi</th>
-                  <th className="px-4 py-3.5 font-semibold">Guruhlari</th>
-                  <th className="px-4 py-3.5 font-semibold">Holati</th>
-                  <th className="px-6 py-3.5 font-semibold text-right">Amallar</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredStudents.map((st) => {
-                  const studentGroups = studentGroupsMap.get(st.id) || [];
+        <>
+          {/* Mobile Card List (Visible on mobile screens < md) */}
+          <div className="grid grid-cols-1 gap-3 md:hidden">
+            {filteredStudents.map((st) => {
+              const studentGroups = studentGroupsMap.get(st.id) || [];
+              return (
+                <Card key={st.id} className="p-4 space-y-3 border border-border shadow-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <Link href={`/students/${st.id}`} className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-sm flex items-center justify-center shrink-0">
+                        {st.first_name[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-bold text-foreground text-sm block truncate">
+                          {st.first_name} {st.last_name || ""}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          Qo‘shilgan: {formatDate(st.joined_at)}
+                        </span>
+                      </div>
+                    </Link>
+                    <StatusBadge status={st.status} />
+                  </div>
 
-                  return (
-                    <tr
-                      key={st.id}
-                      className="hover:bg-muted/20 transition-colors group cursor-pointer"
-                    >
-                      <td className="px-6 py-4">
-                        <Link href={`/students/${st.id}`} className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0">
-                            {st.first_name[0]}
-                          </div>
-                          <div>
-                            <span className="font-semibold text-foreground group-hover:text-blue-600 transition-colors block">
-                              {st.first_name} {st.last_name || ""}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground">
-                              Qo‘shilgan: {formatDate(st.joined_at)}
-                            </span>
-                          </div>
-                        </Link>
-                      </td>
+                  {/* Groups */}
+                  <div className="flex flex-wrap gap-1 items-center">
+                    <span className="text-[11px] text-muted-foreground mr-1">Guruh:</span>
+                    {studentGroups.length === 0 ? (
+                      <span className="text-xs text-muted-foreground italic">Biriktirilmagan</span>
+                    ) : (
+                      studentGroups.map((grp) => (
+                        <span
+                          key={grp.id}
+                          className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
+                        >
+                          {grp.name}
+                        </span>
+                      ))
+                    )}
+                  </div>
 
-                      <td className="px-4 py-4 font-mono text-xs text-muted-foreground">
-                        {st.phone ? (
-                          <a
-                            href={`tel:${st.phone}`}
-                            className="hover:text-blue-600 transition-colors flex items-center gap-1.5"
-                          >
-                            <Phone className="w-3.5 h-3.5" />
-                            <span>{st.phone}</span>
+                  {/* Contacts */}
+                  <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground pt-2 border-t border-border/60">
+                    {st.phone && (
+                      <a
+                        href={`tel:${st.phone}`}
+                        className="flex items-center gap-2 hover:text-blue-600 font-mono py-1 text-foreground"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>{st.phone}</span>
+                      </a>
+                    )}
+                    {st.parent_name && (
+                      <div className="flex items-center gap-1.5 py-0.5">
+                        <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-foreground truncate font-medium">
+                          Ota-onasi: {st.parent_name}
+                        </span>
+                        {st.parent_phone && (
+                          <a href={`tel:${st.parent_phone}`} className="text-blue-600 font-mono text-[11px] ml-auto shrink-0">
+                            {st.parent_phone}
                           </a>
-                        ) : (
-                          "—"
                         )}
-                      </td>
+                      </div>
+                    )}
+                  </div>
 
-                      <td className="px-4 py-4 text-xs">
-                        <div className="space-y-0.5">
-                          <p className="font-medium text-foreground">{st.parent_name || "—"}</p>
-                          {st.parent_phone && (
-                            <p className="text-muted-foreground font-mono text-[11px]">
-                              {st.parent_phone}
-                            </p>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {studentGroups.length === 0 ? (
-                            <span className="text-xs text-muted-foreground italic">
-                              Biriktirilmagan
-                            </span>
-                          ) : (
-                            studentGroups.map((grp) => (
-                              <span
-                                key={grp.id}
-                                className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-                              >
-                                {grp.name}
-                              </span>
-                            ))
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <StatusBadge status={st.status} />
-                      </td>
-
-                      <td className="px-6 py-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                              <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">Amallar</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel className="text-xs">Amallar</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/students/${st.id}`} className="cursor-pointer">
-                                <span>Profilni ko‘rish</span>
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingStudent(st);
-                                setFormDialogOpen(true);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <Edit className="w-4 h-4 mr-2 text-muted-foreground" />
-                              <span>Tahrirlash</span>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator />
-                            <DropdownMenuLabel className="text-xs">Holatni o‘zgartirish</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleStatusChange(st, "Faol")}>
-                              <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-600" />
-                              <span>Faol</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(st, "Ta’til")}>
-                              <Clock className="w-4 h-4 mr-2 text-amber-600" />
-                              <span>Ta’tilda</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(st, "Bitirgan")}>
-                              <CheckCircle2 className="w-4 h-4 mr-2 text-blue-600" />
-                              <span>Bitirgan</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(st, "Tark etgan")}>
-                              <UserX className="w-4 h-4 mr-2 text-rose-600" />
-                              <span>Tark etgan</span>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setStudentToDelete(st);
-                                setDeleteConfirmOpen(true);
-                              }}
-                              className="text-destructive focus:text-destructive cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              <span>O‘chirish</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60 gap-2">
+                    <Button asChild variant="outline" size="sm" className="h-9 text-xs flex-1">
+                      <Link href={`/students/${st.id}`}>Profilni ko‘rish</Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingStudent(st);
+                        setFormDialogOpen(true);
+                      }}
+                      className="h-9 text-xs flex-1 gap-1"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>Tahrirlash</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStudentToDelete(st);
+                        setDeleteConfirmOpen(true);
+                      }}
+                      className="h-9 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-        </Card>
+
+          {/* Desktop Table (Visible on md and above) */}
+          <Card className="hidden md:block shadow-sm overflow-hidden border-border/80">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs uppercase bg-muted/40 text-muted-foreground border-b border-border">
+                  <tr>
+                    <th className="px-6 py-3.5 font-semibold">O‘quvchi</th>
+                    <th className="px-4 py-3.5 font-semibold">Telefon</th>
+                    <th className="px-4 py-3.5 font-semibold">Ota-onasi</th>
+                    <th className="px-4 py-3.5 font-semibold">Guruhlari</th>
+                    <th className="px-4 py-3.5 font-semibold">Holati</th>
+                    <th className="px-6 py-3.5 font-semibold text-right">Amallar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredStudents.map((st) => {
+                    const studentGroups = studentGroupsMap.get(st.id) || [];
+
+                    return (
+                      <tr
+                        key={st.id}
+                        className="hover:bg-muted/20 transition-colors group cursor-pointer"
+                      >
+                        <td className="px-6 py-4">
+                          <Link href={`/students/${st.id}`} className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0">
+                              {st.first_name[0]}
+                            </div>
+                            <div>
+                              <span className="font-semibold text-foreground group-hover:text-blue-600 transition-colors block">
+                                {st.first_name} {st.last_name || ""}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground">
+                                Qo‘shilgan: {formatDate(st.joined_at)}
+                              </span>
+                            </div>
+                          </Link>
+                        </td>
+
+                        <td className="px-4 py-4 font-mono text-xs text-muted-foreground">
+                          {st.phone ? (
+                            <a
+                              href={`tel:${st.phone}`}
+                              className="hover:text-blue-600 transition-colors flex items-center gap-1.5"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>{st.phone}</span>
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+
+                        <td className="px-4 py-4 text-xs">
+                          <div className="space-y-0.5">
+                            <p className="font-medium text-foreground">{st.parent_name || "—"}</p>
+                            {st.parent_phone && (
+                              <p className="text-muted-foreground font-mono text-[11px]">
+                                {st.parent_phone}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {studentGroups.length === 0 ? (
+                              <span className="text-xs text-muted-foreground italic">
+                                Biriktirilmagan
+                              </span>
+                            ) : (
+                              studentGroups.map((grp) => (
+                                <span
+                                  key={grp.id}
+                                  className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
+                                >
+                                  {grp.name}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-4">
+                          <StatusBadge status={st.status} />
+                        </td>
+
+                        <td className="px-6 py-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Amallar</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs">Amallar</DropdownMenuLabel>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/students/${st.id}`} className="cursor-pointer">
+                                  <span>Profilni ko‘rish</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingStudent(st);
+                                  setFormDialogOpen(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Edit className="w-4 h-4 mr-2 text-muted-foreground" />
+                                <span>Tahrirlash</span>
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator />
+                              <DropdownMenuLabel className="text-xs">Holatni o‘zgartirish</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleStatusChange(st, "Faol")}>
+                                <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-600" />
+                                <span>Faol</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(st, "Ta’til")}>
+                                <Clock className="w-4 h-4 mr-2 text-amber-600" />
+                                <span>Ta’tilda</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(st, "Bitirgan")}>
+                                <CheckCircle2 className="w-4 h-4 mr-2 text-blue-600" />
+                                <span>Bitirgan</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(st, "Tark etgan")}>
+                                <UserX className="w-4 h-4 mr-2 text-rose-600" />
+                                <span>Tark etgan</span>
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setStudentToDelete(st);
+                                  setDeleteConfirmOpen(true);
+                                }}
+                                className="text-destructive focus:text-destructive cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                <span>O‘chirish</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
       )}
 
       {/* Add / Edit Student Dialog */}

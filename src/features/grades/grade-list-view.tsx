@@ -226,7 +226,7 @@ export function GradeListView() {
         </Button>
       </div>
 
-      {/* Grades Table */}
+      {/* Grades Table / Mobile Cards */}
       {loading ? (
         <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
@@ -253,124 +253,214 @@ export function GradeListView() {
           }}
         />
       ) : (
-        <Card className="shadow-sm overflow-hidden border-border/80">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs uppercase bg-muted/40 text-muted-foreground border-b border-border">
-                <tr>
-                  <th className="px-6 py-3.5 font-semibold">O‘quvchi</th>
-                  <th className="px-4 py-3.5 font-semibold">Guruh</th>
-                  <th className="px-4 py-3.5 font-semibold">Sinov / Nazorat</th>
-                  <th className="px-4 py-3.5 font-semibold">Ball (Natija)</th>
-                  <th className="px-4 py-3.5 font-semibold">Foiz</th>
-                  <th className="px-4 py-3.5 font-semibold">Sana</th>
-                  <th className="px-4 py-3.5 font-semibold">Izoh</th>
-                  <th className="px-6 py-3.5 font-semibold text-right">Amallar</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredGrades.map((gr) => {
-                  const student = students.find((s) => s.id === gr.student_id);
-                  const group = groups.find((g) => g.id === gr.group_id);
-                  const percent = Math.round((Number(gr.score) / Number(gr.max_score || 100)) * 100);
+        <>
+          {/* Mobile Grade Cards (md:hidden) */}
+          <div className="grid grid-cols-1 gap-3 md:hidden">
+            {filteredGrades.map((gr) => {
+              const student = students.find((s) => s.id === gr.student_id);
+              const group = groups.find((g) => g.id === gr.group_id);
+              const percent = Math.round((Number(gr.score) / Number(gr.max_score || 100)) * 100);
 
-                  const isHigh = percent >= 86;
-                  const isMedium = percent >= 71 && percent < 86;
+              const isHigh = percent >= 86;
+              const isMedium = percent >= 71 && percent < 86;
 
-                  return (
-                    <tr key={gr.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center">
-                            {student?.first_name[0] || "?"}
-                          </div>
-                          <div>
-                            <span className="font-semibold text-foreground block">
-                              {student?.first_name} {student?.last_name || ""}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground font-mono">
-                              {student?.phone || ""}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-3.5">
-                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+              return (
+                <Card key={gr.id} className="p-4 space-y-3 border border-border shadow-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0">
+                        {student?.first_name[0] || "?"}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-bold text-foreground text-sm block truncate">
+                          {student?.first_name} {student?.last_name || ""}
+                        </span>
+                        <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
                           {group?.name || "Guruh"}
                         </span>
-                      </td>
+                      </div>
+                    </div>
 
-                      <td className="px-4 py-3.5 font-medium text-foreground">
-                        {gr.title}
-                      </td>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`text-xs font-bold px-2 py-0.5 rounded ${
+                          isHigh
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                            : isMedium
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        }`}
+                      >
+                        {percent}%
+                      </span>
+                      <span className="text-xs font-bold font-mono text-foreground">
+                        {gr.score}/{gr.max_score || 100}
+                      </span>
+                    </div>
+                  </div>
 
-                      <td className="px-4 py-3.5 font-bold font-mono text-foreground">
-                        {gr.score} <span className="text-muted-foreground font-normal">/ {gr.max_score || 100}</span>
-                      </td>
+                  <div className="text-xs space-y-1 pt-1 border-t border-border/60">
+                    <p className="font-semibold text-foreground">{gr.title}</p>
+                    {gr.notes && (
+                      <p className="text-muted-foreground italic text-[11px]">{gr.notes}</p>
+                    )}
+                  </div>
 
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded ${
-                            isHigh
-                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                              : isMedium
-                              ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                              : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                          }`}
-                        >
-                          {percent}%
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3.5 text-xs text-muted-foreground font-mono">
-                        {formatDate(gr.date)}
-                      </td>
-
-                      <td className="px-4 py-3.5 text-xs text-muted-foreground max-w-xs truncate">
-                        {gr.notes || "—"}
-                      </td>
-
-                      <td className="px-6 py-3.5 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                              <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">Amallar</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-36">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingGrade(gr);
-                                setFormDialogOpen(true);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <Edit className="w-4 h-4 mr-2 text-muted-foreground" />
-                              <span>Tahrirlash</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setGradeToDelete(gr);
-                                setDeleteConfirmOpen(true);
-                              }}
-                              className="text-destructive focus:text-destructive cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              <span>O‘chirish</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60 gap-2">
+                    <span className="text-[11px] text-muted-foreground font-mono">
+                      {formatDate(gr.date)}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingGrade(gr);
+                          setFormDialogOpen(true);
+                        }}
+                        className="h-8 text-xs gap-1"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        <span>Tahrirlash</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setGradeToDelete(gr);
+                          setDeleteConfirmOpen(true);
+                        }}
+                        className="h-8 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-2"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-        </Card>
+
+          {/* Desktop Table (hidden md:block) */}
+          <Card className="hidden md:block shadow-sm overflow-hidden border-border/80">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs uppercase bg-muted/40 text-muted-foreground border-b border-border">
+                  <tr>
+                    <th className="px-6 py-3.5 font-semibold">O‘quvchi</th>
+                    <th className="px-4 py-3.5 font-semibold">Guruh</th>
+                    <th className="px-4 py-3.5 font-semibold">Sinov / Nazorat</th>
+                    <th className="px-4 py-3.5 font-semibold">Ball (Natija)</th>
+                    <th className="px-4 py-3.5 font-semibold">Foiz</th>
+                    <th className="px-4 py-3.5 font-semibold">Sana</th>
+                    <th className="px-4 py-3.5 font-semibold">Izoh</th>
+                    <th className="px-6 py-3.5 font-semibold text-right">Amallar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredGrades.map((gr) => {
+                    const student = students.find((s) => s.id === gr.student_id);
+                    const group = groups.find((g) => g.id === gr.group_id);
+                    const percent = Math.round((Number(gr.score) / Number(gr.max_score || 100)) * 100);
+
+                    const isHigh = percent >= 86;
+                    const isMedium = percent >= 71 && percent < 86;
+
+                    return (
+                      <tr key={gr.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-6 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center">
+                              {student?.first_name[0] || "?"}
+                            </div>
+                            <div>
+                              <span className="font-semibold text-foreground block">
+                                {student?.first_name} {student?.last_name || ""}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground font-mono">
+                                {student?.phone || ""}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-3.5">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                            {group?.name || "Guruh"}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5 font-medium text-foreground">
+                          {gr.title}
+                        </td>
+
+                        <td className="px-4 py-3.5 font-bold font-mono text-foreground">
+                          {gr.score} <span className="text-muted-foreground font-normal">/ {gr.max_score || 100}</span>
+                        </td>
+
+                        <td className="px-4 py-3.5">
+                          <span
+                            className={`text-xs font-bold px-2 py-0.5 rounded ${
+                              isHigh
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                : isMedium
+                                ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                                : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                            }`}
+                          >
+                            {percent}%
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5 text-xs text-muted-foreground font-mono">
+                          {formatDate(gr.date)}
+                        </td>
+
+                        <td className="px-4 py-3.5 text-xs text-muted-foreground max-w-xs truncate">
+                          {gr.notes || "—"}
+                        </td>
+
+                        <td className="px-6 py-3.5 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Amallar</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-36">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingGrade(gr);
+                                  setFormDialogOpen(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Edit className="w-4 h-4 mr-2 text-muted-foreground" />
+                                <span>Tahrirlash</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setGradeToDelete(gr);
+                                  setDeleteConfirmOpen(true);
+                                }}
+                                className="text-destructive focus:text-destructive cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                <span>O‘chirish</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
       )}
 
       {/* Form Dialog */}

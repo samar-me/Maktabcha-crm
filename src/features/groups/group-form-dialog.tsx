@@ -271,17 +271,17 @@ export function GroupFormDialog({
               <p className="text-xs text-destructive">{errors.schedule.message}</p>
             )}
 
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="flex items-center gap-2 p-2 rounded-lg bg-muted/40 border border-border/70 text-xs"
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 rounded-xl bg-muted/40 border border-border/70 text-xs"
                 >
                   <div className="flex-1">
                     <select
                       {...register(`schedule.${index}.day` as const)}
                       aria-label="Dars kuni"
-                      className="w-full h-8 px-2 rounded-md border border-input bg-background font-medium focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full h-9 sm:h-8 px-2.5 rounded-lg border border-input bg-background font-medium focus:outline-none focus:ring-1 focus:ring-ring text-xs"
                     >
                       {WEEKDAYS.map((w) => (
                         <option key={w} value={w}>
@@ -291,37 +291,39 @@ export function GroupFormDialog({
                     </select>
                   </div>
 
-                  <div className="w-28">
-                    <Input
-                      type="time"
-                      className="h-8 text-xs"
-                      aria-label="Boshlanish vaqti"
-                      {...register(`schedule.${index}.start_time` as const)}
-                    />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 sm:w-28">
+                      <Input
+                        type="time"
+                        className="h-9 sm:h-8 text-xs font-mono"
+                        aria-label="Boshlanish vaqti"
+                        {...register(`schedule.${index}.start_time` as const)}
+                      />
+                    </div>
+
+                    <span className="text-muted-foreground text-xs">-</span>
+
+                    <div className="flex-1 sm:w-28">
+                      <Input
+                        type="time"
+                        className="h-9 sm:h-8 text-xs font-mono"
+                        aria-label="Tugash vaqti"
+                        {...register(`schedule.${index}.end_time` as const)}
+                      />
+                    </div>
+
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 sm:h-8 sm:w-8 text-rose-500 hover:text-destructive hover:bg-rose-50 dark:hover:bg-rose-950/40 shrink-0"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                      </Button>
+                    )}
                   </div>
-
-                  <span className="text-muted-foreground">-</span>
-
-                  <div className="w-28">
-                    <Input
-                      type="time"
-                      className="h-8 text-xs"
-                      aria-label="Tugash vaqti"
-                      {...register(`schedule.${index}.end_time` as const)}
-                    />
-                  </div>
-
-                  {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                      onClick={() => remove(index)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  )}
                 </div>
               ))}
             </div>

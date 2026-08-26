@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/formatters";
-import { CreditCard, Banknote, Landmark } from "lucide-react";
+import { CreditCard, Banknote, Landmark, Loader2 } from "lucide-react";
 
 interface PaymentFormDialogProps {
   open: boolean;
@@ -173,9 +173,9 @@ export function PaymentFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-lg sm:text-xl font-bold">
             {isEditing ? "To‘lov ma'lumotlarini tahrirlash" : "To‘lov qabul qilish"}
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -183,11 +183,11 @@ export function PaymentFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
           {/* Student & Group */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-1.5">
-              <Label>
+              <Label className="text-xs font-semibold">
                 O‘quvchi <span className="text-destructive">*</span>
               </Label>
               <Select
@@ -203,12 +203,12 @@ export function PaymentFormDialog({
                   } catch {}
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-10 sm:h-9 text-base sm:text-xs">
                   <SelectValue placeholder="O‘quvchini tanlang" />
                 </SelectTrigger>
                 <SelectContent>
                   {students.map((st) => (
-                    <SelectItem key={st.id} value={st.id}>
+                    <SelectItem key={st.id} value={st.id} className="text-xs">
                       {st.first_name} {st.last_name || ""}
                     </SelectItem>
                   ))}
@@ -220,7 +220,7 @@ export function PaymentFormDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label>
+              <Label className="text-xs font-semibold">
                 Guruh <span className="text-destructive">*</span>
               </Label>
               <Select
@@ -231,12 +231,12 @@ export function PaymentFormDialog({
                   if (grp) setValue("amount", Number(grp.monthly_fee));
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-10 sm:h-9 text-base sm:text-xs">
                   <SelectValue placeholder="Guruhni tanlang" />
                 </SelectTrigger>
                 <SelectContent>
                   {studentGroups.map((grp) => (
-                    <SelectItem key={grp.id} value={grp.id}>
+                    <SelectItem key={grp.id} value={grp.id} className="text-xs">
                       {grp.name}
                     </SelectItem>
                   ))}
@@ -249,9 +249,9 @@ export function PaymentFormDialog({
           </div>
 
           {/* Amount & Preset Button */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="amount">
+              <Label htmlFor="amount" className="text-xs font-semibold">
                 To‘lov summasi (so‘m) <span className="text-destructive">*</span>
               </Label>
               {selectedGroup && (
@@ -260,15 +260,17 @@ export function PaymentFormDialog({
                   onClick={() => setValue("amount", Number(selectedGroup.monthly_fee))}
                   className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-medium"
                 >
-                  Oylik tarif: {formatCurrency(selectedGroup.monthly_fee)}
+                  Tarif: {formatCurrency(selectedGroup.monthly_fee)}
                 </button>
               )}
             </div>
             <Input
               id="amount"
               type="number"
+              inputMode="numeric"
               step="5000"
               disabled={loading}
+              className="text-base sm:text-sm h-10 sm:h-9 font-mono"
               {...register("amount")}
             />
             {errors.amount && (
@@ -278,63 +280,63 @@ export function PaymentFormDialog({
 
           {/* Payment Method Segmented Buttons */}
           <div className="space-y-1.5">
-            <Label>To‘lov usuli</Label>
+            <Label className="text-xs font-semibold">To‘lov usuli</Label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setValue("payment_method", "Karta")}
-                className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all min-h-[44px] ${
                   selectedMethod === "Karta"
-                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
                     : "bg-background border-input text-foreground hover:bg-muted"
                 }`}
               >
-                <CreditCard className="w-4 h-4" />
+                <CreditCard className="w-4 h-4 shrink-0" />
                 <span>Karta</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setValue("payment_method", "Naqd")}
-                className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all min-h-[44px] ${
                   selectedMethod === "Naqd"
-                    ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
                     : "bg-background border-input text-foreground hover:bg-muted"
                 }`}
               >
-                <Banknote className="w-4 h-4" />
+                <Banknote className="w-4 h-4 shrink-0" />
                 <span>Naqd</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setValue("payment_method", "O‘tkazma")}
-                className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all min-h-[44px] ${
                   selectedMethod === "O‘tkazma"
-                    ? "bg-purple-600 text-white border-purple-600 shadow-sm"
+                    ? "bg-purple-600 text-white border-purple-600 shadow-xs"
                     : "bg-background border-input text-foreground hover:bg-muted"
                 }`}
               >
-                <Landmark className="w-4 h-4" />
+                <Landmark className="w-4 h-4 shrink-0" />
                 <span>O‘tkazma</span>
               </button>
             </div>
           </div>
 
           {/* Month, Year & Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-1.5">
-              <Label>To‘lov oyi</Label>
+              <Label className="text-xs font-semibold">To‘lov oyi</Label>
               <Select
                 value={String(selectedMonth)}
                 onValueChange={(val) => setValue("month", Number(val))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-10 sm:h-9 text-base sm:text-xs">
                   <SelectValue placeholder="Oy" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((m) => (
-                    <SelectItem key={m.value} value={String(m.value)}>
+                    <SelectItem key={m.value} value={String(m.value)} className="text-xs">
                       {m.label}
                     </SelectItem>
                   ))}
@@ -343,23 +345,26 @@ export function PaymentFormDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="year">Yili</Label>
+              <Label htmlFor="year" className="text-xs font-semibold">Yili</Label>
               <Input
                 id="year"
                 type="number"
+                inputMode="numeric"
                 disabled={loading}
+                className="h-10 sm:h-9 text-base sm:text-xs font-mono"
                 {...register("year")}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="payment_date">
+              <Label htmlFor="payment_date" className="text-xs font-semibold">
                 Sana <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="payment_date"
                 type="date"
                 disabled={loading}
+                className="h-10 sm:h-9 text-base sm:text-xs"
                 {...register("payment_date")}
               />
             </div>
@@ -367,11 +372,12 @@ export function PaymentFormDialog({
 
           {/* Note */}
           <div className="space-y-1.5">
-            <Label htmlFor="note">Kvitansiya izohi (ixtiyoriy)</Label>
+            <Label htmlFor="note" className="text-xs font-semibold">Kvitansiya izohi (ixtiyoriy)</Label>
             <Input
               id="note"
               placeholder="Masalan: Click / Payme chek raqami yoki eslatma..."
               disabled={loading}
+              className="h-10 sm:h-9 text-base sm:text-xs"
               {...register("note")}
             />
           </div>
@@ -382,11 +388,21 @@ export function PaymentFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={loading}
+              className="h-10 sm:h-9 text-xs"
             >
               Bekor qilish
             </Button>
-            <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
-              {loading ? "Saqlanmoqda..." : isEditing ? "O‘zgarishlarni saqlash" : "To‘lovni qabul qilish"}
+            <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 h-10 sm:h-9 text-xs font-semibold">
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                  <span>Saqlanmoqda...</span>
+                </>
+              ) : isEditing ? (
+                "O‘zgarishlarni saqlash"
+              ) : (
+                "To‘lovni qabul qilish"
+              )}
             </Button>
           </DialogFooter>
         </form>

@@ -44,11 +44,11 @@ export function PaymentReceiptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md print:shadow-none print:border-none p-0 overflow-hidden">
-        <div className="p-6 space-y-5 bg-card text-foreground">
+      <DialogContent className="max-w-md p-0 overflow-hidden">
+        <div className="printable-receipt p-5 sm:p-6 space-y-4 sm:space-y-5 bg-card text-foreground">
           {/* Header */}
-          <div className="text-center pb-4 border-b border-border space-y-1">
-            <div className="inline-flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-lg">
+          <div className="text-center pb-3 border-b border-border space-y-1">
+            <div className="inline-flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-base sm:text-lg">
               <GraduationCap className="w-6 h-6" />
               <span>Maktabcha CRM</span>
             </div>

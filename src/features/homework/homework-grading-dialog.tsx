@@ -188,13 +188,13 @@ export function HomeworkGradingDialog({
                     </div>
 
                     {/* 4 Status Buttons */}
-                    <div className="flex flex-wrap items-center gap-1">
+                    <div className="grid grid-cols-4 sm:flex items-center gap-1.5 w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() => handleSetStatus(r.student_id, "Bajarildi")}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold transition-all ${
+                        className={`py-2 px-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all min-h-[40px] text-center ${
                           r.status === "Bajarildi"
-                            ? "bg-emerald-600 text-white shadow-sm"
+                            ? "bg-emerald-600 text-white shadow-xs"
                             : "bg-muted/60 text-muted-foreground hover:bg-muted"
                         }`}
                       >
@@ -204,9 +204,9 @@ export function HomeworkGradingDialog({
                       <button
                         type="button"
                         onClick={() => handleSetStatus(r.student_id, "Qisman")}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold transition-all ${
+                        className={`py-2 px-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all min-h-[40px] text-center ${
                           r.status === "Qisman"
-                            ? "bg-amber-600 text-white shadow-sm"
+                            ? "bg-amber-600 text-white shadow-xs"
                             : "bg-muted/60 text-muted-foreground hover:bg-muted"
                         }`}
                       >
@@ -216,9 +216,9 @@ export function HomeworkGradingDialog({
                       <button
                         type="button"
                         onClick={() => handleSetStatus(r.student_id, "Bajarilmadi")}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold transition-all ${
+                        className={`py-2 px-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all min-h-[40px] text-center ${
                           r.status === "Bajarilmadi"
-                            ? "bg-rose-600 text-white shadow-sm"
+                            ? "bg-rose-600 text-white shadow-xs"
                             : "bg-muted/60 text-muted-foreground hover:bg-muted"
                         }`}
                       >
@@ -228,9 +228,9 @@ export function HomeworkGradingDialog({
                       <button
                         type="button"
                         onClick={() => handleSetStatus(r.student_id, "Berildi")}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold transition-all ${
+                        className={`py-2 px-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all min-h-[40px] text-center ${
                           r.status === "Berildi"
-                            ? "bg-blue-600 text-white shadow-sm"
+                            ? "bg-blue-600 text-white shadow-xs"
                             : "bg-muted/60 text-muted-foreground hover:bg-muted"
                         }`}
                       >
@@ -240,14 +240,15 @@ export function HomeworkGradingDialog({
                   </div>
 
                   {/* Score & Feedback Inputs */}
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pl-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pl-0 sm:pl-6">
                     <div className="sm:col-span-1">
                       <Input
                         type="number"
+                        inputMode="numeric"
                         value={r.score}
                         onChange={(e) => handleSetScore(r.student_id, e.target.value)}
                         placeholder="Ball (0-100)"
-                        className="h-8 text-xs"
+                        className="h-9 sm:h-8 text-base sm:text-xs font-mono"
                       />
                     </div>
                     <div className="sm:col-span-3">
@@ -255,7 +256,7 @@ export function HomeworkGradingDialog({
                         value={r.feedback}
                         onChange={(e) => handleSetFeedback(r.student_id, e.target.value)}
                         placeholder="O‘qituvchi izohi / taqrizi (ixtiyoriy)..."
-                        className="h-8 text-xs"
+                        className="h-9 sm:h-8 text-base sm:text-xs"
                       />
                     </div>
                   </div>

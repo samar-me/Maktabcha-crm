@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
-import { crmStore } from "@/services/crm-store";
 import { getSettings, updateSettings } from "@/services/settings";
+import { hasSavedPin, savePinHash, clearPin } from "@/lib/personal-auth";
+import { verifyMasterPasswordAction } from "@/actions/auth";
 import {
   Building2,
   Save,
@@ -44,6 +45,7 @@ export default function SettingsPage() {
   const [oldMasterPass, setOldMasterPass] = React.useState("");
   const [newPinCode, setNewPinCode] = React.useState("");
   const [confirmNewPinCode, setConfirmNewPinCode] = React.useState("");
+  const [pinLoading, setPinLoading] = React.useState(false);
 
   React.useEffect(() => {
     async function load() {
@@ -58,7 +60,7 @@ export default function SettingsPage() {
           defaultCurrency: data.default_currency,
           defaultMonthlyFee: String(data.default_monthly_fee),
         });
-        setHasPin(crmStore.hasPinCode());
+        setHasPin(hasSavedPin());
       } catch {
         toast.error("Sozlamalarni yuklashda xatolik");
       } finally {
@@ -88,39 +90,47 @@ export default function SettingsPage() {
     }
   };
 
-  const handleUpdatePin = (e: React.FormEvent) => {
+  const handleUpdatePin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!oldMasterPass.trim()) {
       toast.error("Iltimos, tasdiqlash uchun asosiy parolni kiriting");
       return;
     }
 
-    if (!crmStore.verifyMasterPassword(oldMasterPass)) {
-      toast.error("Asosiy parol noto‘g‘ri kiritildi");
-      return;
-    }
+    setPinLoading(true);
+    try {
+      const res = await verifyMasterPasswordAction(oldMasterPass);
+      if (!res.success) {
+        toast.error(res.error || "Asosiy parol noto‘g‘ri kiritildi");
+        return;
+      }
 
-    if (newPinCode.length !== 4 || isNaN(Number(newPinCode))) {
-      toast.error("PIN-kod aniq 4 ta raqamdan iborat bo‘lishi kerak");
-      return;
-    }
+      if (newPinCode.length !== 4 || isNaN(Number(newPinCode))) {
+        toast.error("PIN-kod aniq 4 ta raqamdan iborat bo‘lishi kerak");
+        return;
+      }
 
-    if (newPinCode !== confirmNewPinCode) {
-      toast.error("Yangi PIN-kodlar bir-biriga mos kelmadi");
-      return;
-    }
+      if (newPinCode !== confirmNewPinCode) {
+        toast.error("Yangi PIN-kodlar bir-biriga mos kelmadi");
+        return;
+      }
 
-    crmStore.setPinCode(newPinCode);
-    setHasPin(true);
-    setIsChangingPin(false);
-    setOldMasterPass("");
-    setNewPinCode("");
-    setConfirmNewPinCode("");
-    toast.success("Yangi shaxsiy PIN-kodingiz muvaffaqiyatli saqlandi!");
+      await savePinHash(newPinCode);
+      setHasPin(true);
+      setIsChangingPin(false);
+      setOldMasterPass("");
+      setNewPinCode("");
+      setConfirmNewPinCode("");
+      toast.success("Yangi shaxsiy PIN-kodingiz muvaffaqiyatli saqlandi!");
+    } catch {
+      toast.error("PIN-kodni yangilashda xatolik");
+    } finally {
+      setPinLoading(false);
+    }
   };
 
   const handleResetPin = () => {
-    crmStore.resetPinCode();
+    clearPin();
     setHasPin(false);
     setIsChangingPin(false);
     toast.info("PIN-kod bekor qilindi. Endi kirishda yana asosiy parol so‘raladi.");
@@ -136,18 +146,18 @@ export default function SettingsPage() {
       {/* Security & PIN-code Section */}
       <Card className="shadow-sm border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/10">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-              <Lock className="w-5 h-5" />
+              <Lock className="w-5 h-5 shrink-0" />
               <CardTitle className="text-base font-bold">Xavfsizlik & PIN-kod Boshqaruvi</CardTitle>
             </div>
             {hasPin ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 w-fit">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>PIN-kod faollashtirilgan</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 w-fit">
                 <KeyRound className="w-3.5 h-3.5" />
                 <span>Asosiy parol rejimida</span>
               </span>
@@ -159,7 +169,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {!isChangingPin ? (
-            <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card">
               <div>
                 <p className="text-sm font-semibold text-foreground">
                   {hasPin ? "Shaxsiy 4 xonali PIN-kod o‘rnatilgan" : "Hozircha PIN-kod o‘rnatilmagan"}
@@ -171,14 +181,14 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {hasPin && (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleResetPin}
-                    className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50"
+                    className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 h-9"
                   >
                     <RotateCcw className="w-3.5 h-3.5 mr-1" />
                     <span>PIN-kodni bekor qilish</span>
@@ -188,7 +198,7 @@ export default function SettingsPage() {
                   type="button"
                   size="sm"
                   onClick={() => setIsChangingPin(true)}
-                  className="text-xs gap-1.5"
+                  className="text-xs gap-1.5 h-9"
                 >
                   <KeyRound className="w-3.5 h-3.5" />
                   <span>{hasPin ? "PIN-kodni o‘zgartirish" : "Yangi PIN-kod o‘rnatish"}</span>
@@ -213,7 +223,7 @@ export default function SettingsPage() {
                     onChange={(e) => setOldMasterPass(e.target.value)}
                     placeholder="Asosiy parolni kiriting"
                     required
-                    className="text-xs h-9"
+                    className="text-base sm:text-xs h-10 sm:h-9"
                   />
                 </div>
 
@@ -224,12 +234,13 @@ export default function SettingsPage() {
                   <Input
                     id="newPinCode"
                     type="password"
+                    inputMode="numeric"
                     maxLength={4}
                     value={newPinCode}
                     onChange={(e) => setNewPinCode(e.target.value)}
                     placeholder="Masalan: 1234"
                     required
-                    className="text-xs h-9 font-mono"
+                    className="text-base sm:text-xs h-10 sm:h-9 font-mono"
                   />
                 </div>
 
@@ -240,12 +251,13 @@ export default function SettingsPage() {
                   <Input
                     id="confirmNewPinCode"
                     type="password"
+                    inputMode="numeric"
                     maxLength={4}
                     value={confirmNewPinCode}
                     onChange={(e) => setConfirmNewPinCode(e.target.value)}
                     placeholder="Qayta kiriting"
                     required
-                    className="text-xs h-9 font-mono"
+                    className="text-base sm:text-xs h-10 sm:h-9 font-mono"
                   />
                 </div>
               </div>
@@ -256,12 +268,17 @@ export default function SettingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsChangingPin(false)}
-                  className="text-xs"
+                  disabled={pinLoading}
+                  className="text-xs h-9"
                 >
                   Bekor qilish
                 </Button>
-                <Button type="submit" size="sm" className="text-xs gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <Button type="submit" size="sm" disabled={pinLoading} className="text-xs gap-1 h-9">
+                  {pinLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  )}
                   <span>Saqlash</span>
                 </Button>
               </div>
@@ -298,6 +315,7 @@ export default function SettingsPage() {
                     onChange={(e) => setSettings({ ...settings, centerName: e.target.value })}
                     placeholder="Masalan: Bilim Maktabi"
                     required
+                    className="text-base sm:text-sm h-10 sm:h-9"
                   />
                 </div>
 
@@ -309,6 +327,7 @@ export default function SettingsPage() {
                     onChange={(e) => setSettings({ ...settings, adminName: e.target.value })}
                     placeholder="Ism va familiya"
                     required
+                    className="text-base sm:text-sm h-10 sm:h-9"
                   />
                 </div>
 
@@ -316,9 +335,11 @@ export default function SettingsPage() {
                   <Label htmlFor="phone">Aloqa telefoni</Label>
                   <Input
                     id="phone"
+                    type="tel"
                     value={settings.phone}
                     onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
                     placeholder="+998 90 123 45 67"
+                    className="text-base sm:text-sm h-10 sm:h-9"
                   />
                 </div>
 
@@ -329,6 +350,7 @@ export default function SettingsPage() {
                     value={settings.address}
                     onChange={(e) => setSettings({ ...settings, address: e.target.value })}
                     placeholder="Shahar, tuman, ko‘cha"
+                    className="text-base sm:text-sm h-10 sm:h-9"
                   />
                 </div>
               </div>
@@ -355,7 +377,7 @@ export default function SettingsPage() {
                   id="defaultCurrency"
                   value="UZS (O‘zbekiston so‘mi)"
                   disabled
-                  className="bg-muted font-medium text-xs"
+                  className="bg-muted font-medium text-xs h-10 sm:h-9"
                 />
               </div>
 
@@ -364,10 +386,12 @@ export default function SettingsPage() {
                 <Input
                   id="defaultMonthlyFee"
                   type="number"
+                  inputMode="numeric"
                   value={settings.defaultMonthlyFee}
                   onChange={(e) => setSettings({ ...settings, defaultMonthlyFee: e.target.value })}
                   placeholder="350000"
                   required
+                  className="text-base sm:text-sm h-10 sm:h-9"
                 />
               </div>
             </div>
@@ -383,43 +407,43 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2.5">
               <button
                 type="button"
                 onClick={() => setTheme("light")}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all min-h-[44px] ${
                   theme === "light"
                     ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 shadow-sm"
                     : "border-border hover:bg-muted/50 text-muted-foreground"
                 }`}
               >
-                <Sun className="w-6 h-6 mb-2" />
+                <Sun className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
                 <span className="text-xs font-semibold">Yorug‘</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTheme("dark")}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all min-h-[44px] ${
                   theme === "dark"
                     ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 shadow-sm"
                     : "border-border hover:bg-muted/50 text-muted-foreground"
                 }`}
               >
-                <Moon className="w-6 h-6 mb-2" />
+                <Moon className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
                 <span className="text-xs font-semibold">Tungi</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTheme("system")}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all min-h-[44px] ${
                   theme === "system"
                     ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 shadow-sm"
                     : "border-border hover:bg-muted/50 text-muted-foreground"
                 }`}
               >
-                <Monitor className="w-6 h-6 mb-2" />
+                <Monitor className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
                 <span className="text-xs font-semibold">Avtomatik</span>
               </button>
             </div>
@@ -428,8 +452,8 @@ export default function SettingsPage() {
 
         {/* Submit Action */}
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="submit" disabled={loading} className="gap-2">
-            <Save className="w-4 h-4" />
+          <Button type="submit" disabled={loading} className="gap-2 h-11 sm:h-9 text-sm font-semibold w-full sm:w-auto">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>{loading ? "Saqlanmoqda..." : "Sozlamalarni saqlash"}</span>
           </Button>
         </div>
