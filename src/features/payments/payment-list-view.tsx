@@ -14,6 +14,7 @@ import { MoneyDisplay } from "@/components/shared/money-display";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { excelExport } from "@/lib/excel-export";
+import { useAutoRefresh } from "@/lib/use-auto-refresh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -95,6 +96,8 @@ export function PaymentListView() {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useAutoRefresh(loadData);
 
   const filteredPayments = React.useMemo(() => {
     return payments.filter((pmt) => {

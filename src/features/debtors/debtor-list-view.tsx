@@ -14,6 +14,7 @@ import { StatCard } from "@/components/shared/stat-card";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { EmptyState } from "@/components/shared/empty-state";
 import { excelExport } from "@/lib/excel-export";
+import { useAutoRefresh } from "@/lib/use-auto-refresh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -77,6 +78,8 @@ export function DebtorListView() {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useAutoRefresh(loadData);
 
   const filteredDebtors = React.useMemo(() => {
     return debtors.filter((d) => {

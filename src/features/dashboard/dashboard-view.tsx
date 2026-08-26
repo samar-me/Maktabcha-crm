@@ -53,6 +53,7 @@ import {
   Legend,
 } from "recharts";
 import { toast } from "sonner";
+import { useAutoRefresh } from "@/lib/use-auto-refresh";
 
 export function DashboardView() {
   const [students, setStudents] = React.useState<Student[]>([]);
@@ -105,6 +106,8 @@ export function DashboardView() {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useAutoRefresh(loadData);
 
   const activeStudents = students.filter((s) => s.status === "Faol");
   const activeGroups = groups.filter((g) => g.status === "Faol");

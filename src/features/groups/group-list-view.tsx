@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
+import { useAutoRefresh } from "@/lib/use-auto-refresh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -68,6 +69,8 @@ export function GroupListView() {
   React.useEffect(() => {
     loadGroups();
   }, [loadGroups]);
+
+  useAutoRefresh(loadGroups);
 
   // Group student counts map
   const groupStudentCounts = React.useMemo(() => {

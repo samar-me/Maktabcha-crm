@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { excelExport } from "@/lib/excel-export";
+import { useAutoRefresh } from "@/lib/use-auto-refresh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -81,6 +82,8 @@ export function StudentListView() {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useAutoRefresh(loadData);
 
   // Group Map for student groups
   const studentGroupsMap = React.useMemo(() => {
