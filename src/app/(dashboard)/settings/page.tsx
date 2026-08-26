@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { getSettings, updateSettings } from "@/services/settings";
 import { clearAllDemoDataAction } from "@/actions/settings";
+import { getTelegramBotSettingsAction } from "@/actions/telegram-group";
 import {
   getPersonalAuthStatusAction,
   changePinAction,
@@ -29,6 +30,7 @@ import {
   RotateCcw,
   Trash2,
   Loader2,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -55,6 +57,19 @@ export default function SettingsPage() {
   const [confirmNewPinCode, setConfirmNewPinCode] = React.useState("");
   const [pinLoading, setPinLoading] = React.useState(false);
 
+  // Telegram Bot Settings state
+  const [botSettings, setBotSettings] = React.useState<{
+    isConfigured: boolean;
+    botUsername: string | null;
+    hasWebhookSecret: boolean;
+    connectedGroupsCount: number;
+  }>({
+    isConfigured: false,
+    botUsername: null,
+    hasWebhookSecret: false,
+    connectedGroupsCount: 0,
+  });
+
   // Clear all demo/test data state
   const [clearDataConfirmOpen, setClearDataConfirmOpen] = React.useState(false);
   const [clearDataLoading, setClearDataLoading] = React.useState(false);
@@ -80,9 +95,10 @@ export default function SettingsPage() {
     async function load() {
       try {
         setFetching(true);
-        const [settingsData, authStatus] = await Promise.all([
+        const [settingsData, authStatus, botData] = await Promise.all([
           getSettings(),
           getPersonalAuthStatusAction(),
+          getTelegramBotSettingsAction(),
         ]);
         setSettings({
           centerName: settingsData.center_name,
@@ -93,6 +109,7 @@ export default function SettingsPage() {
           defaultMonthlyFee: String(settingsData.default_monthly_fee),
         });
         setHasPin(authStatus.configured);
+        setBotSettings(botData);
       } catch {
         toast.error("Sozlamalarni yuklashda xatolik");
       } finally {
@@ -493,6 +510,55 @@ export default function SettingsPage() {
                   required
                   className="text-base sm:text-sm h-10 sm:h-9"
                 />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Telegram Bot & Mini App Integration Status */}
+        <Card className="shadow-sm border-sky-100 dark:border-sky-950/60 bg-sky-50/10 dark:bg-sky-950/5">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
+                <Send className="w-5 h-5" />
+                <CardTitle className="text-base font-bold">Telegram Bot & Mini App Integratsiyasi</CardTitle>
+              </div>
+              {botSettings.isConfigured ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Faol</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
+                  <span>Token sozlanmagan</span>
+                </span>
+              )}
+            </div>
+            <CardDescription className="text-xs">
+              Topshiriqlarni guruhlarga yuborish va o‘quvchilar test platformasi holati
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-card border border-border space-y-0.5">
+                <span className="text-muted-foreground block text-[11px]">Bot Foydalanuvchi nomi</span>
+                <span className="font-bold text-foreground font-mono">
+                  {botSettings.botUsername ? `@${botSettings.botUsername}` : "Sozlanmagan"}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-card border border-border space-y-0.5">
+                <span className="text-muted-foreground block text-[11px]">Webhook & WebApp xavfsizligi</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  {botSettings.hasWebhookSecret ? "HMAC-SHA256 Faol" : "Standart"}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-card border border-border space-y-0.5">
+                <span className="text-muted-foreground block text-[11px]">Ulangan Telegram guruhlar</span>
+                <span className="font-bold text-sky-600 dark:text-sky-400">
+                  {botSettings.connectedGroupsCount} ta guruh
+                </span>
               </div>
             </div>
           </CardContent>

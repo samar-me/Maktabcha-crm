@@ -16,6 +16,7 @@ import { MoneyDisplay } from "@/components/shared/money-display";
 import { StatCard } from "@/components/shared/stat-card";
 import { StudentFormDialog } from "./student-form-dialog";
 import { StudentFormValues } from "./student-schema";
+import { StudentCredentialCard } from "./student-credential-card";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -431,6 +432,9 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
               </CardContent>
             </Card>
           </div>
+
+          {/* Student Telegram Mini App Credentials */}
+          <StudentCredentialCard studentId={student.id} studentName={`${student.first_name} ${student.last_name || ""}`.trim()} />
         </TabsContent>
 
         {/* Tab 2: Groups */}

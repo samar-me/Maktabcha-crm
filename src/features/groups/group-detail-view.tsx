@@ -18,6 +18,7 @@ import { MoneyDisplay } from "@/components/shared/money-display";
 import { StatCard } from "@/components/shared/stat-card";
 import { GroupFormDialog } from "./group-form-dialog";
 import { AddStudentToGroupDialog } from "./add-student-to-group-dialog";
+import { TelegramGroupConnectCard } from "./telegram-group-connect-card";
 import { GroupFormValues } from "./group-schema";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -302,9 +303,9 @@ export function GroupDetailView({ groupId }: GroupDetailViewProps) {
           title="Kutilayotgan tushum"
           value={<MoneyDisplay amount={expectedMonthlyRevenue} size="md" variant="positive" />}
           icon={CreditCard}
-          subtitle="Oylik jami to‘lov hajmi"
-          iconColorClass="text-indigo-600 dark:text-indigo-400"
-          iconBgClass="bg-indigo-50 dark:bg-indigo-950/50"
+          subtitle="Joriy oy uchun"
+          iconColorClass="text-purple-600 dark:text-purple-400"
+          iconBgClass="bg-purple-50 dark:bg-purple-950/50"
         />
         <StatCard
           title="Darslar soni"
@@ -315,6 +316,9 @@ export function GroupDetailView({ groupId }: GroupDetailViewProps) {
           iconBgClass="bg-purple-50 dark:bg-purple-950/50"
         />
       </div>
+
+      {/* Telegram Group Connection */}
+      <TelegramGroupConnectCard groupId={group.id} groupName={group.name} />
 
       {/* Tabs: Student Roster, Schedule, Lessons */}
       <Tabs defaultValue="roster" className="space-y-4">

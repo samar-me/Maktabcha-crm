@@ -18,6 +18,7 @@ import {
   GraduationCap,
   ChevronRight,
   Lock,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,12 @@ export const navItems: NavItem[] = [
     title: "Bosh sahifa",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Topshiriqlar",
+    href: "/assignments",
+    icon: Target,
+    badge: "Telegram",
   },
   {
     title: "O‘quvchilar",

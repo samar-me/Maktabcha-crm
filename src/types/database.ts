@@ -471,12 +471,403 @@ export type Database = {
         };
         Relationships: [];
       };
+      telegram_group_links: {
+        Row: {
+          id: string;
+          group_id: string;
+          telegram_chat_id: number;
+          telegram_chat_title: string;
+          status: "Faol" | "Uzilgan";
+          connected_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          telegram_chat_id: number;
+          telegram_chat_title: string;
+          status?: "Faol" | "Uzilgan";
+          connected_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          telegram_chat_id?: number;
+          telegram_chat_title?: string;
+          status?: "Faol" | "Uzilgan";
+          connected_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      telegram_group_connect_codes: {
+        Row: {
+          id: string;
+          group_id: string;
+          code_hash: string;
+          plain_code: string;
+          expires_at: string;
+          used_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          code_hash: string;
+          plain_code: string;
+          expires_at: string;
+          used_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          code_hash?: string;
+          plain_code?: string;
+          expires_at?: string;
+          used_at?: string | null;
+        };
+        Relationships: [];
+      };
+      student_credentials: {
+        Row: {
+          student_id: string;
+          password_hash: string;
+          password_salt: string;
+          password_version: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          student_id: string;
+          password_hash: string;
+          password_salt: string;
+          password_version?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          student_id?: string;
+          password_hash?: string;
+          password_salt?: string;
+          password_version?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      assignments: {
+        Row: {
+          id: string;
+          group_id: string;
+          title: string;
+          description: string | null;
+          public_token: string;
+          status: "Qoralama" | "Faol" | "Yakunlangan" | "Arxivlangan";
+          scoring_base_points: number;
+          scoring_rank_step: number;
+          scoring_min_points: number;
+          anti_cheat_mode: boolean;
+          telegram_message_id: number | null;
+          published_at: string | null;
+          closed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          title: string;
+          description?: string | null;
+          public_token: string;
+          status?: "Qoralama" | "Faol" | "Yakunlangan" | "Arxivlangan";
+          scoring_base_points?: number;
+          scoring_rank_step?: number;
+          scoring_min_points?: number;
+          anti_cheat_mode?: boolean;
+          telegram_message_id?: number | null;
+          published_at?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          title?: string;
+          description?: string | null;
+          public_token?: string;
+          status?: "Qoralama" | "Faol" | "Yakunlangan" | "Arxivlangan";
+          scoring_base_points?: number;
+          scoring_rank_step?: number;
+          scoring_min_points?: number;
+          anti_cheat_mode?: boolean;
+          telegram_message_id?: number | null;
+          published_at?: string | null;
+          closed_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      assignment_questions: {
+        Row: {
+          id: string;
+          assignment_id: string;
+          position: number;
+          question_text: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          assignment_id: string;
+          position: number;
+          question_text: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          assignment_id?: string;
+          position?: number;
+          question_text?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      question_options: {
+        Row: {
+          id: string;
+          question_id: string;
+          position: number;
+          option_text: string;
+          is_correct: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          question_id: string;
+          position: number;
+          option_text: string;
+          is_correct?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          question_id?: string;
+          position?: number;
+          option_text?: string;
+          is_correct?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      assignment_participants: {
+        Row: {
+          id: string;
+          assignment_id: string;
+          student_id: string;
+          display_name_snapshot: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          assignment_id: string;
+          student_id: string;
+          display_name_snapshot: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          assignment_id?: string;
+          student_id?: string;
+          display_name_snapshot?: string;
+        };
+        Relationships: [];
+      };
+      assignment_attempts: {
+        Row: {
+          id: string;
+          assignment_id: string;
+          student_id: string;
+          status: "in_progress" | "completed";
+          current_question_position: number;
+          started_at: string;
+          completed_at: string | null;
+          raw_score: number;
+          final_score: number;
+          final_rank: number | null;
+          correct_count: number;
+          first_place_count: number;
+          second_place_count: number;
+          suspicious_event_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          assignment_id: string;
+          student_id: string;
+          status?: "in_progress" | "completed";
+          current_question_position?: number;
+          started_at?: string;
+          completed_at?: string | null;
+          raw_score?: number;
+          final_score?: number;
+          final_rank?: number | null;
+          correct_count?: number;
+          first_place_count?: number;
+          second_place_count?: number;
+          suspicious_event_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          assignment_id?: string;
+          student_id?: string;
+          status?: "in_progress" | "completed";
+          current_question_position?: number;
+          started_at?: string;
+          completed_at?: string | null;
+          raw_score?: number;
+          final_score?: number;
+          final_rank?: number | null;
+          correct_count?: number;
+          first_place_count?: number;
+          second_place_count?: number;
+          suspicious_event_count?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      student_answers: {
+        Row: {
+          id: string;
+          attempt_id: string;
+          question_id: string;
+          selected_option_id: string;
+          is_correct: boolean;
+          correct_rank: number | null;
+          score: number;
+          confirmed_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          attempt_id: string;
+          question_id: string;
+          selected_option_id: string;
+          is_correct: boolean;
+          correct_rank?: number | null;
+          score?: number;
+          confirmed_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          attempt_id?: string;
+          question_id?: string;
+          selected_option_id?: string;
+          is_correct?: boolean;
+          correct_rank?: number | null;
+          score?: number;
+          confirmed_at?: string;
+        };
+        Relationships: [];
+      };
+      student_assignment_sessions: {
+        Row: {
+          id: string;
+          attempt_id: string;
+          student_id: string;
+          assignment_id: string;
+          token_hash: string;
+          telegram_user_id: number | null;
+          telegram_username: string | null;
+          created_at: string;
+          last_seen_at: string;
+          expires_at: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          attempt_id: string;
+          student_id: string;
+          assignment_id: string;
+          token_hash: string;
+          telegram_user_id?: number | null;
+          telegram_username?: string | null;
+          created_at?: string;
+          last_seen_at?: string;
+          expires_at: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          attempt_id?: string;
+          student_id?: string;
+          assignment_id?: string;
+          token_hash?: string;
+          telegram_user_id?: number | null;
+          telegram_username?: string | null;
+          last_seen_at?: string;
+          expires_at?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
+      assignment_event_logs: {
+        Row: {
+          id: string;
+          assignment_id: string;
+          attempt_id: string | null;
+          student_id: string | null;
+          event_type: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          assignment_id: string;
+          attempt_id?: string | null;
+          student_id?: string | null;
+          event_type: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          assignment_id?: string;
+          attempt_id?: string | null;
+          student_id?: string | null;
+          event_type?: string;
+          metadata?: Json;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      submit_assignment_answer: {
+        Args: {
+          p_session_token_hash: string;
+          p_selected_option_id: string;
+        };
+        Returns: Json;
+      };
+      finalize_assignment_leaderboard: {
+        Args: {
+          p_assignment_id: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -501,6 +892,20 @@ export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type SystemSettings = Database["public"]["Tables"]["settings"]["Row"];
 export type PersonalAuth = Database["public"]["Tables"]["personal_auth"]["Row"];
 
+export type TelegramGroupLink = Database["public"]["Tables"]["telegram_group_links"]["Row"];
+export type TelegramGroupConnectCode = Database["public"]["Tables"]["telegram_group_connect_codes"]["Row"];
+export type StudentCredential = Database["public"]["Tables"]["student_credentials"]["Row"];
+export type Assignment = Database["public"]["Tables"]["assignments"]["Row"];
+export type AssignmentQuestion = Database["public"]["Tables"]["assignment_questions"]["Row"];
+export type QuestionOption = Database["public"]["Tables"]["question_options"]["Row"];
+export type AssignmentParticipant = Database["public"]["Tables"]["assignment_participants"]["Row"];
+export type AssignmentAttempt = Database["public"]["Tables"]["assignment_attempts"]["Row"];
+export type StudentAnswer = Database["public"]["Tables"]["student_answers"]["Row"];
+export type StudentAssignmentSession = Database["public"]["Tables"]["student_assignment_sessions"]["Row"];
+export type AssignmentEventLog = Database["public"]["Tables"]["assignment_event_logs"]["Row"];
+
+export type AssignmentStatus = Assignment["status"];
+
 export type StudentInsert = Database["public"]["Tables"]["students"]["Insert"];
 export type StudentUpdate = Database["public"]["Tables"]["students"]["Update"];
 export type GroupInsert = Database["public"]["Tables"]["groups"]["Insert"];
@@ -519,3 +924,4 @@ export type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
 export type PaymentUpdate = Database["public"]["Tables"]["payments"]["Update"];
 export type SettingsInsert = Database["public"]["Tables"]["settings"]["Insert"];
 export type SettingsUpdate = Database["public"]["Tables"]["settings"]["Update"];
+
