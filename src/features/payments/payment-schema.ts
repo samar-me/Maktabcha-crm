@@ -9,6 +9,7 @@ export const paymentSchema = z.object({
   month: z.coerce.number().min(1).max(12).default(new Date().getMonth() + 1),
   year: z.coerce.number().min(2020).max(2030).default(new Date().getFullYear()),
   note: z.string().optional().nullable(),
+  discount_id: z.string().optional().nullable(),
 });
 
 export type PaymentFormValues = z.infer<typeof paymentSchema>;

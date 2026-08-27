@@ -98,6 +98,9 @@ export function PaymentFormDialog({
     updateStudentGroups();
   }, [selectedStudentId, groups]);
 
+  // NEW: State to hold the active discount
+  const [activeDiscount, setActiveDiscount] = React.useState<any>(null);
+
   React.useEffect(() => {
     async function initForm() {
       if (payment) {
@@ -111,6 +114,7 @@ export function PaymentFormDialog({
           year: payment.year,
           note: payment.note || "",
         });
+        setActiveDiscount(null);
       } else {
         const studentIdToUse = initialStudentId || (students[0]?.id || "");
         let groupIdToUse = initialGroupId || "";
@@ -128,16 +132,35 @@ export function PaymentFormDialog({
         }
 
         const selectedGroup = groups.find((g) => g.id === groupIdToUse);
+        let baseAmount = selectedGroup ? Number(selectedGroup.monthly_fee) : 400000;
+        
+        let foundDiscount = null;
+        if (studentIdToUse) {
+          try {
+             // We dynamically import here to avoid needing to add it to top-level if not needed, 
+             // but better to import at top. Let's assume we add it to the top.
+             const { getUnusedDiscount } = await import("@/services/discounts");
+             foundDiscount = await getUnusedDiscount(studentIdToUse);
+             if (foundDiscount) {
+                baseAmount = baseAmount - (baseAmount * (foundDiscount.discount_percentage / 100));
+             }
+          } catch (e) {
+             console.error(e);
+          }
+        }
+        
+        setActiveDiscount(foundDiscount);
 
         reset({
           student_id: studentIdToUse,
           group_id: groupIdToUse,
-          amount: selectedGroup ? Number(selectedGroup.monthly_fee) : 400000,
+          amount: baseAmount,
           payment_date: new Date().toISOString().split("T")[0],
           payment_method: "Karta",
           month: currentMonth,
           year: currentYear,
-          note: "",
+          note: foundDiscount ? `Chegirma: ${foundDiscount.reason} (${foundDiscount.discount_percentage}%)` : "",
+          discount_id: foundDiscount ? foundDiscount.id : null,
         });
       }
     }

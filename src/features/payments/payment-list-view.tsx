@@ -8,6 +8,7 @@ import { getStudents } from "@/services/students";
 import { getMonthlyFinancialSummary, MonthlyFinancialSummary } from "@/services/reports";
 import { PaymentFormDialog } from "./payment-form-dialog";
 import { PaymentReceiptDialog } from "./payment-receipt-dialog";
+import { MonthlyWinnerDialog } from "./monthly-winner-dialog";
 import { PaymentFormValues } from "./payment-schema";
 import { StatCard } from "@/components/shared/stat-card";
 import { MoneyDisplay } from "@/components/shared/money-display";
@@ -40,6 +41,10 @@ import {
   FileSpreadsheet,
   Loader2,
   RotateCcw,
+  Download,
+  Calendar,
+  AlertCircle,
+  Trophy,
 } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -70,6 +75,8 @@ export function PaymentListView() {
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [paymentToDelete, setPaymentToDelete] = React.useState<Payment | null>(null);
+
+  const [winnerDialogOpen, setWinnerDialogOpen] = React.useState(false);
 
   const loadData = React.useCallback(async () => {
     try {
@@ -142,6 +149,12 @@ export function PaymentListView() {
           year: values.year,
           note: values.note || null,
         });
+        
+        if (values.discount_id) {
+           const { markDiscountAsUsed } = await import("@/services/discounts");
+           await markDiscountAsUsed(values.discount_id);
+        }
+        
         toast.success("To‘lov qabul qilindi");
       }
 
@@ -271,6 +284,17 @@ export function PaymentListView() {
           </span>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setWinnerDialogOpen(true)}
+              className="gap-1.5 shrink-0 text-xs h-9 border-amber-500/30 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+              size="sm"
+            >
+              <Trophy className="w-4 h-4 text-amber-500" />
+              <span className="hidden sm:inline">Oy g'olibini aniqlash</span>
+              <span className="sm:hidden">G'olib</span>
+            </Button>
+            
             <Button
               variant="outline"
               onClick={handleExportExcel}
@@ -571,6 +595,13 @@ export function PaymentListView() {
         cancelText="Bekor qilish"
         variant="destructive"
         onConfirm={handleDeletePayment}
+      />
+      
+      {/* Monthly Winner Dialog */}
+      <MonthlyWinnerDialog
+        open={winnerDialogOpen}
+        onOpenChange={setWinnerDialogOpen}
+        groups={groups}
       />
     </div>
   );
