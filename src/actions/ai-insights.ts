@@ -61,7 +61,7 @@ export async function generateDashboardInsightsAction(): Promise<{ success: bool
     `;
 
     const result = await generateObject({
-      model: google("gemini-1.5-flash-latest"), // fast model for insights
+      model: google("gemini-1.5-flash"), // fast model for insights
       system: `Sen o'quv markaz tahlilchisisan. Senga markazning joriy holati haqida qisqacha ma'lumot beriladi.
       Shu ma'lumotlarga asoslanib, eng muhim 3-4 ta xulosa (insight) yaratib ber.
       Faqat berilgan ma'lumotlardan foydalan. O'zbek tilida yoz.`,
