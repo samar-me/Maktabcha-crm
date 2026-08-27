@@ -17,6 +17,7 @@ import { parseCsvContent } from "./csv-parser";
 import { parseDocxBuffer } from "./docx-parser";
 import { parsePdfBuffer } from "./pdf-parser";
 import { parseTextContent } from "./text-parser";
+import { parseCurriculumWithAI } from "./ai-fallback-parser";
 import { CurriculumImportRow } from "./types";
 
 /**
@@ -106,14 +107,33 @@ export async function parseUniversalCurriculumFile(
 
       case "docx": {
         const docxRes = await parseDocxBuffer(fileData.buffer);
-        const normalized = normalizeParsedRows(docxRes.rows);
+        let items = docxRes.rows;
+        let detectedTitle = docxRes.detectedTitle;
+        let detectedDescription = docxRes.detectedDescription;
+
+        // Auto-enhance with AI if raw text is available
+        const rawContent = docxRes.unparsedText || "";
+        if (rawContent.trim().length > 30) {
+          try {
+            const aiRes = await parseCurriculumWithAI(rawContent);
+            if (aiRes.items && aiRes.items.length > 0) {
+              items = aiRes.items;
+              detectedTitle = aiRes.courseTitle || detectedTitle;
+              detectedDescription = aiRes.courseDescription || detectedDescription;
+            }
+          } catch (aiErr) {
+            console.warn("AI docx enhancement fallback to regex:", aiErr);
+          }
+        }
+
+        const normalized = normalizeParsedRows(items);
         return {
           success: true,
           fileType,
           fileName: fileData.name,
           fileSizeFormatted,
-          detectedTitle: docxRes.detectedTitle,
-          detectedDescription: docxRes.detectedDescription,
+          detectedTitle,
+          detectedDescription,
           items: normalized,
           unparsedText: docxRes.unparsedText,
         };
@@ -121,20 +141,39 @@ export async function parseUniversalCurriculumFile(
 
       case "pdf": {
         const pdfRes = await parsePdfBuffer(fileData.buffer);
-        const normalized = normalizeParsedRows(pdfRes.rows);
+        let items = pdfRes.rows;
+        let detectedTitle = pdfRes.detectedTitle;
+        let detectedDescription = pdfRes.detectedDescription;
+
+        // Auto-enhance with AI if raw text is available
+        if (pdfRes.rawText && pdfRes.rawText.trim().length > 30) {
+          try {
+            const aiRes = await parseCurriculumWithAI(pdfRes.rawText);
+            if (aiRes.items && aiRes.items.length > 0) {
+              items = aiRes.items;
+              detectedTitle = aiRes.courseTitle || detectedTitle;
+              detectedDescription = aiRes.courseDescription || detectedDescription;
+            }
+          } catch (aiErr) {
+            console.warn("AI PDF enhancement fallback to regex:", aiErr);
+          }
+        }
+
+        const normalized = normalizeParsedRows(items);
         return {
           success: !pdfRes.isScannedPdf || normalized.length > 0,
           fileType,
           fileName: fileData.name,
           fileSizeFormatted,
-          detectedTitle: pdfRes.detectedTitle,
-          detectedDescription: pdfRes.detectedDescription,
+          detectedTitle,
+          detectedDescription,
           items: normalized,
           unparsedText: pdfRes.unparsedText,
-          isScannedPdf: pdfRes.isScannedPdf,
-          error: pdfRes.isScannedPdf && normalized.length === 0
-            ? "Bu PDF skanerlangan rasm ko‘rinishida. Matnni avtomatik o‘qib bo‘lmadi."
-            : undefined,
+          isScannedPdf: pdfRes.isScannedPdf && normalized.length === 0,
+          error:
+            pdfRes.isScannedPdf && normalized.length === 0
+              ? "Bu PDF skanerlangan rasm ko‘rinishida. Matnni avtomatik o‘qib bo‘lmadi."
+              : undefined,
         };
       }
 

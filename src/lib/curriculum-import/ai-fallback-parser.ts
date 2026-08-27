@@ -89,3 +89,89 @@ QOIDALAR:
     );
   }
 }
+
+/**
+ * Generate complete curriculum syllabus from user topic prompt and lesson count
+ */
+export async function generateCurriculumFromPrompt(
+  topicPrompt: string,
+  lessonCount: number = 12
+): Promise<{
+  courseTitle?: string;
+  courseDescription?: string;
+  items: CurriculumImportRow[];
+}> {
+  if (!topicPrompt || topicPrompt.trim().length === 0) {
+    throw new Error("Iltimos, dars mavzusi yoki kurs yo‘nalishini kiriting.");
+  }
+
+  const count = Math.min(Math.max(lessonCount, 1), 72);
+
+  const systemPrompt = `Siz professional ta'lim metodisti va o'quv dasturlari (curriculum) bo'yicha ekspert AI yordamchisiz.
+Sizga o'qituvchi kurs yo'nalishi va darslar sonini beradi.
+
+SIZNING VAZIFANGIZ:
+Ushbu soha bo'yicha noldan boshlab bosqichma-bosqich, professional va chuqur ${count} ta darslik to'liq ish rejasini (o'quv dasturi) ishlab chiqish va quyidagi JSON formatida qaytarish:
+{
+  "courseTitle": "Kursning to'liq nomi",
+  "courseDescription": "Kurs haqida batafsil ma'lumot va o'rganiladigan texnologiyalar",
+  "items": [
+    {
+      "orderNumber": 1,
+      "title": "Mavzu nomi (aniq va professional)",
+      "description": "Darsda o'rganiladigan asosiy nazariy tushunchalar",
+      "objective": "Ushbu darsdan kutilayotgan aniq ta'limiy maqsad",
+      "practice": "Dars davomida qilinadigan amaliy mashg'ulot / loyiha",
+      "homeworkPlan": "O'quvchiga beriladigan mustaqil uy vazifasi",
+      "durationMinutes": 90,
+      "category": "Modul yoki bo'lim nomi"
+    }
+  ]
+}
+
+QOIDALAR:
+1. FAQAT yaroqli JSON qaytaring. Markdown bloklari (\`\`\`json ...) ichiga oling.
+2. Darslar soni aynan ${count} ta bo'lsin.
+3. Darslar mantiqiy ketma-ketlikda (soddadan murakkabga) joylashsin.
+4. Har bir dars uchun amaliy mashg'ulot va uy vazifasi real hayotiy va foydali bo'lsin.
+5. Tartib raqami 1 dan ${count} gacha ketma-ket ketsin.`;
+
+  const userPrompt = `Menga quyidagi mavzu bo'yicha ${count} ta darsdan iborat to'liq ish rejasi tuzib bering:\n"${topicPrompt.trim()}"`;
+
+  const response = await callAIProvider({
+    systemPrompt,
+    userPrompt,
+    jsonMode: true,
+  });
+
+  let jsonStr = response.trim();
+  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (jsonMatch) {
+    jsonStr = jsonMatch[1].trim();
+  }
+
+  try {
+    const rawParsed = JSON.parse(jsonStr);
+    const validated = aiCurriculumSchema.parse(rawParsed);
+
+    const rows: CurriculumImportRow[] = validated.items.map((item, idx) => ({
+      orderNumber: item.orderNumber || idx + 1,
+      title: item.title,
+      description: item.description,
+      objective: item.objective,
+      practice: item.practice,
+      homeworkPlan: item.homeworkPlan,
+      durationMinutes: item.durationMinutes || 90,
+      category: item.category,
+    }));
+
+    return {
+      courseTitle: validated.courseTitle,
+      courseDescription: validated.courseDescription,
+      items: rows,
+    };
+  } catch (err: any) {
+    console.error("AI Curriculum Generation Validation Failed:", err, "\nRaw Response:", jsonStr);
+    throw new Error("AI dars rejasini shakllantirishda xatolik yuz berdi. Qayta urinib ko‘ring.");
+  }
+}

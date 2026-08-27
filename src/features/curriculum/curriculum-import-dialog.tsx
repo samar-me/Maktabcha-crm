@@ -21,6 +21,7 @@ import { parseTextContent } from "@/lib/curriculum-import/text-parser";
 import {
   parseUniversalCurriculumFileAction,
   parseCurriculumTextWithAIAction,
+  generateCurriculumWithAIAction,
   bulkImportCurriculumItemsAction,
   createCurriculumAction,
   getCurriculaAction,
@@ -64,6 +65,8 @@ import {
   Info,
   ArrowRight,
   BookOpen,
+  Bot,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -84,8 +87,12 @@ export function CurriculumImportDialog({
 }: UniversalImportDialogProps) {
   const router = useRouter();
 
-  // Wizard Tab: "file" | "text"
-  const [tab, setTab] = React.useState<"file" | "text">("file");
+  // Wizard Tab: "file" | "text" | "ai"
+  const [tab, setTab] = React.useState<"file" | "text" | "ai">("file");
+
+  // AI Prompt generator state
+  const [aiCoursePrompt, setAiCoursePrompt] = React.useState("");
+  const [aiLessonCount, setAiLessonCount] = React.useState(24);
 
   // Step: 1 (Upload), 2 (Analyze), 3 (Preview & Edit), 4 (Done)
   const [step, setStep] = React.useState<1 | 2 | 3 | 4>(1);
@@ -341,6 +348,92 @@ export function CurriculumImportDialog({
         setStep(1);
       }
     }, 400);
+  };
+
+  // Perform text parsing directly with AI
+  const handleAnalyzeTextWithAI = async () => {
+    if (!rawTextInput.trim()) {
+      toast.error("Iltimos, matn kiriting");
+      return;
+    }
+
+    setStep(2);
+    setLoadingStage("✨ AI matnni tahlil qilib, darslarga ajratmoqda...");
+
+    try {
+      const res = await parseCurriculumTextWithAIAction(rawTextInput);
+      if (!res.success || !res.data) {
+        toast.error(res.error || "AI tahlilida xatolik");
+        setStep(1);
+        return;
+      }
+
+      const rows = res.data.items || [];
+      const normalized = normalizeParsedRows(rows);
+      setParsedRows(normalized);
+      setParseResult({
+        success: true,
+        fileType: "txt",
+        fileName: "✍️ AI Tartiblagan Matn",
+        fileSizeFormatted: `${rawTextInput.length} belgi`,
+        detectedTitle: res.data.courseTitle,
+        detectedDescription: res.data.courseDescription,
+        items: normalized,
+      });
+
+      if (res.data.courseTitle && !newCurriculumName) {
+        setNewCurriculumName(res.data.courseTitle);
+      }
+
+      toast.success(`✨ AI ${normalized.length} ta dars mavzusini aniqladi!`);
+      setStep(3);
+    } catch (err: any) {
+      toast.error(err.message || "AI tahlilida xatolik");
+      setStep(1);
+    }
+  };
+
+  // Generate Curriculum using AI Prompt
+  const handleGenerateCurriculumWithAI = async () => {
+    if (!aiCoursePrompt.trim()) {
+      toast.error("Iltimos, kurs mavzusi yoki yo‘nalishini kiriting");
+      return;
+    }
+
+    setStep(2);
+    setLoadingStage("✨ AI dars rejasini shakllantirmoqda...");
+
+    try {
+      const res = await generateCurriculumWithAIAction(aiCoursePrompt, aiLessonCount);
+      if (!res.success || !res.data) {
+        toast.error(res.error || "AI dars rejasini tuzishda xatolik");
+        setStep(1);
+        return;
+      }
+
+      const rows = res.data.items || [];
+      const normalized = normalizeParsedRows(rows);
+      setParsedRows(normalized);
+      setParseResult({
+        success: true,
+        fileType: "txt",
+        fileName: "✨ AI Yaratgan Dars Rejasi",
+        fileSizeFormatted: `${normalized.length} ta dars`,
+        detectedTitle: res.data.courseTitle || aiCoursePrompt,
+        detectedDescription: res.data.courseDescription,
+        items: normalized,
+      });
+
+      if (!newCurriculumName) {
+        setNewCurriculumName(res.data.courseTitle || aiCoursePrompt);
+      }
+
+      toast.success(`🎉 AI ${normalized.length} ta professional dars mavzusini yaratdi!`);
+      setStep(3);
+    } catch (err: any) {
+      toast.error(err.message || "AI generatsiyasida xatolik");
+      setStep(1);
+    }
   };
 
   // AI-Assisted Structure Extraction for unparsed / messy content
@@ -606,35 +699,48 @@ export function CurriculumImportDialog({
             {/* ================= STEP 1: FILE PICKER & TABS ================= */}
             {step === 1 && (
               <div className="space-y-4">
-                {/* Mode Tabs: Fayl yuklash / Matn joylash */}
-                <div className="grid grid-cols-2 p-1 bg-muted/50 rounded-xl border border-border">
+                {/* Mode Tabs: Fayl yuklash / Matn joylash / AI bilan yaratish */}
+                <div className="grid grid-cols-3 p-1 bg-muted/50 rounded-xl border border-border">
                   <button
                     type="button"
                     onClick={() => setTab("file")}
-                    className={`py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
                       tab === "file"
                         ? "bg-card text-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <FileSpreadsheet className="w-4 h-4 text-blue-600" />
-                    <span>Fayl tanlash (Excel, Word, PDF, CSV, TXT)</span>
+                    <span className="truncate">📁 Fayldan yuklash</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setTab("text")}
-                    className={`py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
                       tab === "text"
                         ? "bg-card text-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <FileText className="w-4 h-4 text-purple-600" />
-                    <span>✍️ Matndan nusxa olib joylash</span>
+                    <span className="truncate">✍️ Matn nusxalash</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTab("ai")}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                      tab === "ai"
+                        ? "bg-gradient-to-r from-purple-500/10 to-blue-500/10 text-purple-700 dark:text-purple-300 font-bold border border-purple-300/50 shadow-xs"
+                        : "text-purple-600 dark:text-purple-400 hover:text-foreground"
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                    <span className="truncate font-bold">✨ AI Generator</span>
                   </button>
                 </div>
 
-                {tab === "file" ? (
+                {/* TAB 1: FILE PICKER */}
+                {tab === "file" && (
                   <div className="space-y-4">
                     {/* Drag and Drop Zone */}
                     <div
@@ -667,7 +773,7 @@ export function CurriculumImportDialog({
                         Faylni shu yerga tashlang yoki tanlang
                       </h3>
                       <p className="text-xs text-muted-foreground max-w-sm mb-4">
-                        Tizim hujjatdagi barcha dars mavzulari, mazmuni va amaliyotlarini avtomatik
+                        Tizim va AI hujjatdagi barcha dars mavzulari, mazmuni va amaliyotlarini avtomatik
                         aniqlaydi.
                       </p>
 
@@ -702,31 +808,138 @@ export function CurriculumImportDialog({
                       </div>
                     </div>
                   </div>
-                ) : (
-                  /* Text input mode */
+                )}
+
+                {/* TAB 2: TEXT INPUT */}
+                {tab === "text" && (
                   <div className="space-y-3">
                     <Label className="text-xs font-semibold">
                       Dars mavzulari ro‘yxatini nusxalab bu yerga joylang:
                     </Label>
                     <Textarea
-                      rows={9}
+                      rows={8}
                       placeholder={`1. Kompyuter tuzilishi va operatsion tizim\n2. Internet va raqamli xavfsizlik\n3. Matn muharrirlari bilan ishlash\n4. Algoritmlar va dasturlash asoslari`}
                       value={rawTextInput}
                       onChange={(e) => setRawTextInput(e.target.value)}
                       className="font-mono text-xs leading-relaxed"
                     />
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Har bir darsni yangi qatordan yozing (1. 2. yoki shunchaki mavzu)</span>
-                      <Button
-                        size="sm"
-                        onClick={handleAnalyzeText}
-                        disabled={!rawTextInput.trim()}
-                        className="text-xs rounded-xl"
-                      >
-                        <span>Tahlil qilish</span>
-                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                      </Button>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1">
+                      <span className="text-[11px] text-muted-foreground">
+                        Har bir darsni yangi qatordan yozing yoki to‘liq silabusni tashlang
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleAnalyzeText}
+                          disabled={!rawTextInput.trim()}
+                          className="text-xs rounded-xl h-9"
+                        >
+                          <span>Oddiy tahlil</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleAnalyzeTextWithAI}
+                          disabled={!rawTextInput.trim()}
+                          className="text-xs rounded-xl h-9 bg-purple-600 hover:bg-purple-700 text-white font-bold gap-1.5 shadow-xs"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>✨ AI bilan tartiblash</span>
+                        </Button>
+                      </div>
                     </div>
+                  </div>
+                )}
+
+                {/* TAB 3: AI GENERATOR */}
+                {tab === "ai" && (
+                  <div className="space-y-4 p-5 rounded-2xl border border-purple-200 dark:border-purple-900/50 bg-gradient-to-b from-purple-50/40 via-card to-card dark:from-purple-950/20">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 shrink-0">
+                        <Bot className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                          <span>✨ Sun'iy Intellekt bilan Ish Reja Yaratish</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-semibold">
+                            Gemini 3.6 Flash
+                          </span>
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Faqat kurs yo‘nalishini yozing — AI har bir dars uchun mavzu, maqsad, amaliyot va uy vazifalarini avtomatik tuzib beradi.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Kurs yo‘nalishi yoki mavzusi:</Label>
+                      <Input
+                        placeholder="Masalan: Frontend dasturlash (HTML, CSS, JavaScript, React)"
+                        value={aiCoursePrompt}
+                        onChange={(e) => setAiCoursePrompt(e.target.value)}
+                        className="h-10 text-xs rounded-xl"
+                      />
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] text-muted-foreground font-medium">Tayyor namunalar:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          "Frontend dasturlash (HTML, CSS, JS, React)",
+                          "Backend Python va Django dasturlash",
+                          "Ingliz tili IELTS tayyorgarlik kursi",
+                          "Grafik dizayn va Photoshop/Illustrator",
+                          "Robototexnika va Arduino asoslari",
+                          "Kompyuter savodxonligi va IT asoslari",
+                        ].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setAiCoursePrompt(preset)}
+                            className="text-[11px] px-2.5 py-1 rounded-lg bg-card border border-border hover:border-purple-400 text-muted-foreground hover:text-foreground transition-all"
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Lesson Count Badges */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Darslar soni:</Label>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          { count: 12, label: "12 dars (1 oy)" },
+                          { count: 24, label: "24 dars (2 oy)" },
+                          { count: 36, label: "36 dars (3 oy)" },
+                          { count: 72, label: "72 dars (6 oy)" },
+                        ].map((c) => (
+                          <button
+                            key={c.count}
+                            type="button"
+                            onClick={() => setAiLessonCount(c.count)}
+                            className={`py-2 px-2 rounded-xl text-xs font-bold text-center border transition-all ${
+                              aiLessonCount === c.count
+                                ? "bg-purple-600 text-white border-purple-600 shadow-sm"
+                                : "bg-card text-foreground border-border hover:border-purple-300"
+                            }`}
+                          >
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleGenerateCurriculumWithAI}
+                      disabled={!aiCoursePrompt.trim()}
+                      className="w-full h-10 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-xs gap-2 shadow-sm"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>✨ AI Bilan {aiLessonCount} ta Dars Rejasini Yaratish</span>
+                    </Button>
                   </div>
                 )}
               </div>

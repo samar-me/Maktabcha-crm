@@ -18,7 +18,7 @@ export function getAIConfig(): AIProviderConfig {
   let model = process.env.AI_MODEL || "";
   if (!model) {
     if (provider === "gemini") {
-      model = "gemini-3-flash-preview";
+      model = "gemini-3.6-flash";
     } else if (provider === "openai") {
       model = "gpt-4o-mini";
     } else {
@@ -82,7 +82,7 @@ async function callGeminiAPI(
   options: CallAIOptions,
   signal: AbortSignal
 ): Promise<string> {
-  const model = config.model || "gemini-2.5-flash";
+  const model = config.model || "gemini-3.6-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
 
   const payload: any = {

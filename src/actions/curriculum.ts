@@ -407,14 +407,24 @@ export async function parseUniversalCurriculumFileAction(formData: FormData) {
  * AI-Assisted Structure Extraction Server Action
  */
 export async function parseCurriculumTextWithAIAction(rawText: string) {
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) return { success: false, error: "Ruxsat berilmagan." };
-
   try {
     const { parseCurriculumWithAI } = await import("@/lib/curriculum-import");
     const result = await parseCurriculumWithAI(rawText);
     return { success: true, data: result };
   } catch (err: any) {
     return { success: false, error: err.message || "AI tahlilida xatolik yuz berdi." };
+  }
+}
+
+/**
+ * AI-Powered Complete Curriculum Generation from prompt
+ */
+export async function generateCurriculumWithAIAction(prompt: string, lessonCount: number = 12) {
+  try {
+    const { generateCurriculumFromPrompt } = await import("@/lib/curriculum-import/ai-fallback-parser");
+    const result = await generateCurriculumFromPrompt(prompt, lessonCount);
+    return { success: true, data: result };
+  } catch (err: any) {
+    return { success: false, error: err.message || "AI dars rejasini tuzishda xatolik yuz berdi." };
   }
 }
