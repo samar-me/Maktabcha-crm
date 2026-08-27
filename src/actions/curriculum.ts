@@ -1,7 +1,5 @@
 "use server";
 
-export const maxDuration = 60; // Allow up to 60 seconds for AI parsing
-
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";

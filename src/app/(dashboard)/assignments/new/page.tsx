@@ -35,3 +35,4 @@ export default async function NewAssignmentPage({ searchParams }: NewAssignmentP
     />
   );
 }
+export const maxDuration = 60; 

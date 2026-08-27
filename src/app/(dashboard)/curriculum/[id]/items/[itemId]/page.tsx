@@ -45,3 +45,4 @@ export default async function CurriculumItemDetailPage({
     />
   );
 }
+export const maxDuration = 60; 
