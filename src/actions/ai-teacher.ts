@@ -59,7 +59,7 @@ export async function generateLessonPlanAction(groupId: string) {
     `;
 
     const result = await generateObject({
-      model: google("gemini-2.5-flash"),
+      model: google("gemini-3.6-flash"),
       system: `Sen professional o'qituvchisan. Senga guruhning oxirgi o'tgan mavzulari va rejadagi mavzular beriladi. 
       Vazifang: Ertangi dars uchun batafsil dars rejasini (Lesson Plan) yaratish.
       O'zbek tilida yozing. Vaqtlarni mantiqan taqsimlang (umumiy 90 daqiqa).`,

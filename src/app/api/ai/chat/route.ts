@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const result = streamText({
-    model: google("gemini-2.5-flash"),
+    model: google("gemini-3.6-flash"),
     system: `Sen Maktabcha CRM tizimining AI yordamchisisan. Sen o'quv markaz rahbarlari va o'qituvchilariga tizimdagi holatni tahlil qilishga yordam berasan.
     Foydalanuvchi bilan har doim o'zbek tilida, aniq, qisqa va do'stona gaplash.
     Senga berilgan asboblar (tools) yordamida o'quv markaz bazasidan real ma'lumotlarni ola bilasan. Hech qachon ma'lumot o'ylab topma.
