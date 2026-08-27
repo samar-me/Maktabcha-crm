@@ -40,7 +40,7 @@ function extractPdfStreamsPureJs(buffer: Buffer): string {
 }
 
 /**
- * Extract curriculum rows and metadata from PDF buffer using unpdf with fallback
+ * Extract curriculum rows and metadata from PDF buffer using Gemini Multimodal AI with unpdf fallback
  */
 export async function parsePdfBuffer(fileBuffer: Buffer | ArrayBuffer): Promise<{
   detectedTitle?: string;
@@ -52,6 +52,90 @@ export async function parsePdfBuffer(fileBuffer: Buffer | ArrayBuffer): Promise<
 }> {
   const nodeBuffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
 
+  // 1. PRIMARY: Gemini Multimodal Native PDF Extraction (Visually and textually reads all pages)
+  try {
+    const { callGeminiMultimodalFile, getAIConfig } = await import("@/lib/ai/provider");
+    const config = getAIConfig();
+
+    if (config.isConfigured) {
+      const systemPrompt = `Siz professional ta'lim metodisti va o'quv dasturlari (curriculum) bo'yicha ekspert AI yordamchisiz.
+Sizga o'quv markazi yoki maktabning dars ish rejasi / o'quv dasturi PDF hujjati berilmoqda.
+
+SIZNING VAZIFANGIZ:
+Ushbu PDF hujjatning BARCHA sahifalarini (boshidan oxirigacha) to'liq va sinchkovlik bilan o'qib, undagi BARCHA darslarni bitta ham qoldirmasdan quyidagi JSON formatida qaytarish:
+{
+  "courseTitle": "Hujjatdagi kurs/fan nomi",
+  "courseDescription": "Kurs haqida umumiy tavsif",
+  "items": [
+    {
+      "orderNumber": 1,
+      "title": "Dars mavzusi (aniq, toza, hechnarsa qisqartirilmasin)",
+      "description": "Darsda o'rganiladigan asosiy nazariy tushunchalar",
+      "objective": "Dars maqsadi",
+      "practice": "Amaliy mashg'ulot / topshiriq",
+      "homeworkPlan": "Uyga vazifa",
+      "durationMinutes": 90,
+      "category": "Modul yoki bo'lim nomi"
+    }
+  ]
+}
+
+QAT'IY QOIDALAR:
+1. Hujjatdagi BARCHA darslarni (masalan 1-darsdan to oxirgi darsgacha, barcha 72 ta yoki nechtaligi qat'iy nazar) to'liq chiqaring.
+2. Dars raqamlarini (orderNumber) 1 dan boshlab ketma-ket qo'ying.
+3. Sarlavhalar, jadval ustunlari yoki muallif ismlarini dars mavzusi sifatida kiritmang.
+4. FAQAT yaroqli JSON qaytaring. Markdown bloklari ichiga oling.`;
+
+      const userPrompt =
+        "Ushbu PDF hujjatdagi barcha dars mavzulari va rejalarini boshidan oxirigacha to'liq o'qib, tartibli JSON formatida bering.";
+
+      const rawResponse = await callGeminiMultimodalFile({
+        systemPrompt,
+        userPrompt,
+        fileBuffer: nodeBuffer,
+        mimeType: "application/pdf",
+        jsonMode: true,
+        maxOutputTokens: 8192,
+        temperature: 0.1,
+      });
+
+      let jsonStr = rawResponse.trim();
+      const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1].trim();
+      }
+
+      const parsed = JSON.parse(jsonStr);
+      if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
+        const { aiCurriculumSchema } = await import("./types");
+        const validated = aiCurriculumSchema.parse(parsed);
+
+        const rows: CurriculumImportRow[] = validated.items.map((item, idx) => ({
+          orderNumber: item.orderNumber || idx + 1,
+          title: item.title,
+          description: item.description,
+          objective: item.objective,
+          practice: item.practice,
+          homeworkPlan: item.homeworkPlan,
+          durationMinutes: item.durationMinutes || 90,
+          category: item.category,
+        }));
+
+        return {
+          detectedTitle: validated.courseTitle,
+          detectedDescription: validated.courseDescription,
+          rows,
+          unparsedText: "",
+          isScannedPdf: false,
+          rawText: rawResponse,
+        };
+      }
+    }
+  } catch (aiErr) {
+    console.warn("Gemini Multimodal PDF extraction failed, using unpdf fallback:", aiErr);
+  }
+
+  // 2. FALLBACK: unpdf text stream extraction
   let rawText = "";
 
   try {

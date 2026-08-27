@@ -438,6 +438,12 @@ export function CurriculumImportDialog({
 
   // AI-Assisted Structure Extraction for unparsed / messy content
   const handleAiStructureEnhance = async (textToProcess?: string) => {
+    if (selectedFile) {
+      // Re-run deep multimodal AI analysis on the actual uploaded file
+      handleAnalyzeFile(selectedFile);
+      return;
+    }
+
     const content = textToProcess || unparsedText || rawTextInput;
     if (!content.trim()) {
       toast.error("AI tahlili uchun matn topilmadi");
@@ -456,18 +462,14 @@ export function CurriculumImportDialog({
 
       const aiItems = res.data.items || [];
       if (aiItems.length === 0) {
-        toast.warning("AI yangi mavzular topa olmadi");
+        toast.warning("AI dars mavzularini topa olmadi");
         return;
       }
 
-      const nextStartOrder = parsedRows.length > 0
-        ? Math.max(...parsedRows.map((r) => r.orderNumber || 1)) + 1
-        : 1;
+      const normalized = normalizeParsedRows(aiItems, 1);
+      setParsedRows(normalized);
 
-      const normalized = normalizeParsedRows(aiItems, nextStartOrder);
-      setParsedRows((prev) => [...prev, ...normalized]);
-
-      if (res.data.courseTitle && !newCurriculumName) {
+      if (res.data.courseTitle) {
         setNewCurriculumName(res.data.courseTitle);
       }
 

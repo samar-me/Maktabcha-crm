@@ -195,3 +195,87 @@ async function callOpenAICompatibleAPI(
 
   return rawText.trim();
 }
+
+export interface CallAIMultimodalFileOptions {
+  systemPrompt?: string;
+  userPrompt: string;
+  fileBuffer: Buffer;
+  mimeType: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+  jsonMode?: boolean;
+}
+
+/**
+ * Execute Gemini Multimodal document reading (PDF, Images, etc.)
+ */
+export async function callGeminiMultimodalFile(
+  options: CallAIMultimodalFileOptions
+): Promise<string> {
+  const config = getAIConfig();
+  if (!config.isConfigured || !config.apiKey) {
+    throw new Error("AI xizmati sozlanmagan.");
+  }
+
+  const model = config.model || "gemini-3.6-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
+
+  const base64Data = options.fileBuffer.toString("base64");
+
+  const payload: any = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType: options.mimeType,
+              data: base64Data,
+            },
+          },
+          {
+            text: options.userPrompt,
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: options.temperature ?? 0.1,
+      maxOutputTokens: options.maxOutputTokens ?? 8192,
+    },
+  };
+
+  if (options.systemPrompt) {
+    payload.systemInstruction = {
+      parts: [{ text: options.systemPrompt }],
+    };
+  }
+
+  if (options.jsonMode) {
+    payload.generationConfig.responseMimeType = "application/json";
+  }
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("Gemini Multimodal API Error:", response.status, errorBody);
+    throw new Error(`Gemini Multimodal xatosi: ${response.status}`);
+  }
+
+  const result = await response.json();
+  const rawText =
+    result?.candidates?.[0]?.content?.parts?.[0]?.text ||
+    result?.candidates?.[0]?.text ||
+    "";
+
+  if (!rawText) {
+    throw new Error("AI bo‘sh javob qaytardi.");
+  }
+
+  return rawText.trim();
+}
