@@ -89,7 +89,7 @@ export async function calculateMonthlyWinnerAction(groupId: string, month: numbe
         discount_percentage: 20,
         reason: "Oy g'olibi",
         is_used: false,
-      });
+      } as any);
 
     if (insErr) throw new Error(insErr.message);
 

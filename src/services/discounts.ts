@@ -31,7 +31,7 @@ export async function createStudentDiscount(discount: StudentDiscountInsert): Pr
   const supabase = createClient();
   const { data, error } = await supabase
     .from("student_discounts")
-    .insert(discount)
+    .insert(discount as any)
     .select()
     .single();
 
@@ -43,7 +43,7 @@ export async function markDiscountAsUsed(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase
     .from("student_discounts")
-    .update({ is_used: true })
+    .update({ is_used: true } as any)
     .eq("id", id);
 
   if (error) throw new Error(error.message);
