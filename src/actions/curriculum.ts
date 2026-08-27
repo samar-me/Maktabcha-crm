@@ -375,9 +375,6 @@ export async function createLessonFromCurriculumItemAction(
  * Universal File Parser Action (Node.js runtime)
  */
 export async function parseUniversalCurriculumFileAction(formData: FormData) {
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) return { success: false, error: "Ruxsat berilmagan." };
-
   try {
     const file = formData.get("file") as File | null;
     const sheetName = (formData.get("sheetName") as string | null) || undefined;
