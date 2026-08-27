@@ -9,23 +9,26 @@ export default function PlayRootPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if we are inside Telegram Mini App
-    if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
-      const tg = (window as any).Telegram.WebApp;
-      tg.ready();
+    // We add a small timeout to ensure Telegram script has loaded
+    const checkTelegram = () => {
+      if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
+        const tg = (window as any).Telegram.WebApp;
+        tg.ready();
 
-      // Telegram passes startapp parameter as start_param in initDataUnsafe
-      const startParam = tg.initDataUnsafe?.start_param;
+        const startParam = tg.initDataUnsafe?.start_param;
 
-      if (startParam) {
-        // Redirect to the actual assignment page
-        router.replace(`/play/${startParam}`);
+        if (startParam) {
+          router.replace(`/play/${startParam}`);
+        } else {
+          setError("Topshiriq kodi topilmadi. Iltimos, Telegram guruhdagi tugmani qaytadan bosing.");
+        }
       } else {
-        setError("Topshiriq kodi topilmadi. Iltimos, Telegram guruhdagi tugmani qaytadan bosing.");
+        setError("Bu sahifa faqat Telegram orqali ochilishi kerak. Yoki Internet tezligingiz past bo'lishi mumkin. Qayta urinib ko'ring.");
       }
-    } else {
-      setError("Bu sahifa faqat Telegram orqali ochilishi kerak.");
-    }
+    };
+
+    const timer = setTimeout(checkTelegram, 500); // 500ms delay to wait for external script
+    return () => clearTimeout(timer);
   }, [router]);
 
   return (
