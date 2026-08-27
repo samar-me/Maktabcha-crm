@@ -185,7 +185,7 @@ export async function createAssignment(data: {
       scoring_min_points: data.scoringMinPoints || 100,
       anti_cheat_mode: data.antiCheatMode ?? true,
       curriculum_item_id: data.curriculumItemId || null,
-      lesson_id: data.lessonId || null,
+      // lesson_id: data.lessonId || null, // column does not exist in production schema yet
     })
     .select("id")
     .single();
