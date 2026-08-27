@@ -851,23 +851,25 @@ export function AIAssignmentGeneratorView({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Group Selector if not already in lesson mode */}
-              {sourceType !== "crm_lesson" && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">O‘quv guruhi</Label>
-                  <select
-                    value={selectedGroupId}
-                    onChange={(e) => setSelectedGroupId(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-xs font-medium"
-                  >
-                    {groups.map((g) => (
+              {/* Group Selector (Always show so user knows which group they are assigning to) */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">O‘quv guruhi</Label>
+                <select
+                  value={selectedGroupId}
+                  onChange={(e) => setSelectedGroupId(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-xs font-medium"
+                >
+                  {groups.length === 0 ? (
+                    <option value="">Guruhlar mavjud emas</option>
+                  ) : (
+                    groups.map((g) => (
                       <option key={g.id} value={g.id}>
                         {g.name} ({g.course_name})
                       </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+                    ))
+                  )}
+                </select>
+              </div>
 
               {/* Question Count */}
               <div className="space-y-2">
