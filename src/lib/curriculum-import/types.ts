@@ -82,18 +82,18 @@ export interface UniversalParseResult {
  * AI Document Extraction Schema
  */
 export const aiCurriculumSchema = z.object({
-  courseTitle: z.string().optional(),
-  courseDescription: z.string().optional(),
+  courseTitle: z.string().nullish().transform((v) => v || undefined),
+  courseDescription: z.string().nullish().transform((v) => v || undefined),
   items: z.array(
     z.object({
-      orderNumber: z.number().int().positive().optional(),
-      title: z.string().min(1),
-      description: z.string().optional().default(""),
-      objective: z.string().optional().default(""),
-      practice: z.string().optional().default(""),
-      homeworkPlan: z.string().optional().default(""),
-      durationMinutes: z.number().int().positive().optional().default(90),
-      category: z.string().optional().default(""),
+      orderNumber: z.number().nullish().transform((v) => (v ? Math.round(v) : undefined)),
+      title: z.string().nullish().transform((v) => (v || "").trim()).refine((v) => v.length > 0, "Mavzu nomi kiritilishi shart"),
+      description: z.string().nullish().transform((v) => v || ""),
+      objective: z.string().nullish().transform((v) => v || ""),
+      practice: z.string().nullish().transform((v) => v || ""),
+      homeworkPlan: z.string().nullish().transform((v) => v || ""),
+      durationMinutes: z.number().nullish().transform((v) => (v ? Math.round(v) : 90)),
+      category: z.string().nullish().transform((v) => v || ""),
     })
   ),
 });

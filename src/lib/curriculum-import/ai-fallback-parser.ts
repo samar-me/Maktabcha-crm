@@ -1,8 +1,104 @@
 import { callAIProvider } from "@/lib/ai/provider";
-import { aiCurriculumSchema, CurriculumImportRow } from "./types";
+import { CurriculumImportRow } from "./types";
 
 /**
- * AI-Assisted Structure Extraction for messy documents or unstructured educational text
+ * Resiliently normalize any AI JSON output shape (objects, arrays, uzbek keys, english keys)
+ */
+function normalizeAIResponse(rawParsed: any): {
+  courseTitle?: string;
+  courseDescription?: string;
+  items: CurriculumImportRow[];
+} {
+  const courseTitle =
+    rawParsed?.courseTitle ||
+    rawParsed?.title ||
+    rawParsed?.kurs_nomi ||
+    rawParsed?.kursNomi ||
+    undefined;
+
+  const courseDescription =
+    rawParsed?.courseDescription ||
+    rawParsed?.description ||
+    rawParsed?.tavsif ||
+    rawParsed?.kurs_tavsifi ||
+    undefined;
+
+  let rawList: any[] = [];
+  if (Array.isArray(rawParsed)) {
+    rawList = rawParsed;
+  } else if (Array.isArray(rawParsed?.items)) {
+    rawList = rawParsed.items;
+  } else if (Array.isArray(rawParsed?.lessons)) {
+    rawList = rawParsed.lessons;
+  } else if (Array.isArray(rawParsed?.darslar)) {
+    rawList = rawParsed.darslar;
+  } else if (Array.isArray(rawParsed?.curriculum)) {
+    rawList = rawParsed.curriculum;
+  } else if (Array.isArray(rawParsed?.topics)) {
+    rawList = rawParsed.topics;
+  } else if (Array.isArray(rawParsed?.plan)) {
+    rawList = rawParsed.plan;
+  } else if (Array.isArray(rawParsed?.mavzular)) {
+    rawList = rawParsed.mavzular;
+  }
+
+  const items: CurriculumImportRow[] = [];
+  for (let i = 0; i < rawList.length; i++) {
+    const r = rawList[i];
+    if (!r) continue;
+
+    const title = (
+      r.title ||
+      r.nomi ||
+      r.name ||
+      r.mavzu ||
+      r.dars ||
+      r.lesson ||
+      r.topic ||
+      (typeof r === "string" ? r : "") ||
+      ""
+    )
+      .toString()
+      .trim();
+
+    if (!title) continue;
+
+    const orderNumber =
+      Number(r.orderNumber || r.order || r.tartib_raqami || r.raqami || r.num || i + 1) ||
+      i + 1;
+
+    items.push({
+      orderNumber,
+      title,
+      description: (r.description || r.tavsifi || r.mazmuni || r.tavsif || "")
+        .toString()
+        .trim(),
+      objective: (r.objective || r.maqsadi || r.maqsad || "")
+        .toString()
+        .trim(),
+      practice: (r.practice || r.amaliyoti || r.amaliyot || r.mashgulot || "")
+        .toString()
+        .trim(),
+      homeworkPlan: (r.homeworkPlan || r.homework || r.uyga_vazifa || r.vazifa || "")
+        .toString()
+        .trim(),
+      durationMinutes:
+        Number(r.durationMinutes || r.duration || r.davomiyligi || 90) || 90,
+      category: (r.category || r.modul || r.bolim || r.section || "")
+        .toString()
+        .trim(),
+    });
+  }
+
+  return {
+    courseTitle: courseTitle ? String(courseTitle).trim() : undefined,
+    courseDescription: courseDescription ? String(courseDescription).trim() : undefined,
+    items,
+  };
+}
+
+/**
+ * AI-Assisted Structure Extraction for messy text / pasted syllabus
  */
 export async function parseCurriculumWithAI(
   documentText: string
@@ -15,14 +111,13 @@ export async function parseCurriculumWithAI(
     throw new Error("Tahlil qilish uchun matn topilmadi.");
   }
 
-  // Safety: Limit context size to 40,000 characters
   const trimmedText = documentText.slice(0, 40000);
 
-  const systemPrompt = `Siz ta'lim metodisti va o'quv dasturlari (ish reja) tuzish bo'yicha mutaxassis AI yordamchisiz.
+  const systemPrompt = `Siz professional ta'lim metodisti va o'quv dasturlari (curriculum) bo'yicha mutaxassis AI yordamchisiz.
 Sizga o'quv markazi yoki maktabning dars ish rejasi / o'quv dasturi matni beriladi.
 
 SIZNING VAZIFANGIZ:
-Ushbu matnni tahlil qilib, dars mavzulari va rejasini quyidagi JSON formatida qaytarish:
+Ushbu matnni to'liq tahlil qilib, dars mavzulari va rejasini quyidagi JSON formatida qaytarish:
 {
   "courseTitle": "Kurs nomi (masalan: Frontend Dasturlash)",
   "courseDescription": "Kurs haqida qisqacha tavsif",
@@ -43,11 +138,10 @@ Ushbu matnni tahlil qilib, dars mavzulari va rejasini quyidagi JSON formatida qa
 QOIDALAR:
 1. FAQAT yaroqli JSON qaytaring. Markdown bloklari (\`\`\`json ...) ichiga oling.
 2. Har bir dars mavzusi ("title") aniq bo'lishi shart.
-3. Hujjatning sarlavhasi yoki muallif ma'lumotlarini dars mavzusi sifatida kiritmang ("courseTitle"ga yozing).
-4. Tartib raqami (orderNumber) 1 dan boshlab ketma-ket ketsin.
-5. Hech qanday boshqa izoh yoki matn qo'shmang.`;
+3. Hujjatdagi BARCHA darslarni bitta ham qoldirmay chiqaring.
+4. Tartib raqami (orderNumber) 1 dan boshlab ketma-ket ketsin.`;
 
-  const userPrompt = `Quyidagi o'quv dasturi matnini tahlil qilib, JSON shakliga keltiring:\n\n${trimmedText}`;
+  const userPrompt = `Quyidagi o'quv dasturi matnini tahlil qilib, darslar ro'yxatini JSON shakliga keltiring:\n\n${trimmedText}`;
 
   const response = await callAIProvider({
     systemPrompt,
@@ -55,7 +149,6 @@ QOIDALAR:
     jsonMode: true,
   });
 
-  // Extract JSON from response
   let jsonStr = response.trim();
   const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (jsonMatch) {
@@ -64,29 +157,16 @@ QOIDALAR:
 
   try {
     const rawParsed = JSON.parse(jsonStr);
-    const validated = aiCurriculumSchema.parse(rawParsed);
+    const normalized = normalizeAIResponse(rawParsed);
 
-    const rows: CurriculumImportRow[] = validated.items.map((item, idx) => ({
-      orderNumber: item.orderNumber || idx + 1,
-      title: item.title,
-      description: item.description,
-      objective: item.objective,
-      practice: item.practice,
-      homeworkPlan: item.homeworkPlan,
-      durationMinutes: item.durationMinutes || 90,
-      category: item.category,
-    }));
+    if (normalized.items.length === 0) {
+      throw new Error("AI dars mavzularini aniqlay olmadi.");
+    }
 
-    return {
-      courseTitle: validated.courseTitle,
-      courseDescription: validated.courseDescription,
-      items: rows,
-    };
+    return normalized;
   } catch (err: any) {
-    console.error("AI Curriculum Parsing Validation Failed:", err, "\nRaw Response:", jsonStr);
-    throw new Error(
-      "AI javobini o'qishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring yoki matnni tekshiring."
-    );
+    console.error("AI Curriculum Parsing Failed:", err, "\nRaw Response:", jsonStr);
+    throw new Error(err.message || "AI javobini o'qishda xatolik yuz berdi.");
   }
 }
 
@@ -152,26 +232,15 @@ QOIDALAR:
 
   try {
     const rawParsed = JSON.parse(jsonStr);
-    const validated = aiCurriculumSchema.parse(rawParsed);
+    const normalized = normalizeAIResponse(rawParsed);
 
-    const rows: CurriculumImportRow[] = validated.items.map((item, idx) => ({
-      orderNumber: item.orderNumber || idx + 1,
-      title: item.title,
-      description: item.description,
-      objective: item.objective,
-      practice: item.practice,
-      homeworkPlan: item.homeworkPlan,
-      durationMinutes: item.durationMinutes || 90,
-      category: item.category,
-    }));
+    if (normalized.items.length === 0) {
+      throw new Error("AI dars rejasini shakllantira olmadi.");
+    }
 
-    return {
-      courseTitle: validated.courseTitle,
-      courseDescription: validated.courseDescription,
-      items: rows,
-    };
+    return normalized;
   } catch (err: any) {
-    console.error("AI Curriculum Generation Validation Failed:", err, "\nRaw Response:", jsonStr);
-    throw new Error("AI dars rejasini shakllantirishda xatolik yuz berdi. Qayta urinib ko‘ring.");
+    console.error("AI Curriculum Generation Failed:", err, "\nRaw Response:", jsonStr);
+    throw new Error(err.message || "AI dars rejasini tuzishda xatolik yuz berdi.");
   }
 }
