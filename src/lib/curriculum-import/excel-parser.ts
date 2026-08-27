@@ -118,11 +118,12 @@ function normalizeHeaderKey(header: string): keyof typeof COLUMN_ALIASES | null 
 /**
  * Inspect Excel workbook for sheets
  */
-export function getExcelWorkbookInfo(fileBuffer: ArrayBuffer | Buffer): {
+export function getExcelWorkbookInfo(fileBuffer: ArrayBuffer | Buffer | Uint8Array): {
   sheets: ExcelSheetInfo[];
   defaultSheet: string;
 } {
-  const workbook = XLSX.read(fileBuffer, { type: "buffer" });
+  const readType = typeof Buffer !== "undefined" && Buffer.isBuffer(fileBuffer) ? "buffer" : "array";
+  const workbook = XLSX.read(fileBuffer, { type: readType as any });
   const sheets: ExcelSheetInfo[] = workbook.SheetNames.map((name) => {
     const sheet = workbook.Sheets[name];
     const range = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
@@ -140,14 +141,15 @@ export function getExcelWorkbookInfo(fileBuffer: ArrayBuffer | Buffer): {
  * Parse specific Excel sheet into structured CurriculumImportRow array
  */
 export function parseExcelSheet(
-  fileBuffer: ArrayBuffer | Buffer,
+  fileBuffer: ArrayBuffer | Buffer | Uint8Array,
   sheetName?: string
 ): {
   rows: CurriculumImportRow[];
   sheets: ExcelSheetInfo[];
   selectedSheet: string;
 } {
-  const workbook = XLSX.read(fileBuffer, { type: "buffer", cellDates: true });
+  const readType = typeof Buffer !== "undefined" && Buffer.isBuffer(fileBuffer) ? "buffer" : "array";
+  const workbook = XLSX.read(fileBuffer, { type: readType as any, cellDates: true });
   const sheetsInfo = getExcelWorkbookInfo(fileBuffer).sheets;
   const targetSheetName = sheetName && workbook.Sheets[sheetName] ? sheetName : workbook.SheetNames[0];
   const worksheet = workbook.Sheets[targetSheetName];

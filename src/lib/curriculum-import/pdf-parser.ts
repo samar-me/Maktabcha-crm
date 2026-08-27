@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse");
 import { CurriculumImportRow } from "./types";
 import { parseGenericDocumentText } from "./detect-structure";
 
@@ -17,8 +15,30 @@ export async function parsePdfBuffer(fileBuffer: Buffer | ArrayBuffer): Promise<
   const nodeBuffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
 
   try {
-    const pdfData = await pdfParse(nodeBuffer);
-    const rawText = pdfData.text || "";
+    let rawText = "";
+
+    // Dynamic require to prevent bundling errors in different environments
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pdfParseModule = require("pdf-parse");
+
+    if (typeof pdfParseModule === "function") {
+      const pdfData = await pdfParseModule(nodeBuffer);
+      rawText = pdfData?.text || "";
+    } else if (pdfParseModule?.PDFParse) {
+      const parser = new pdfParseModule.PDFParse({
+        data: new Uint8Array(nodeBuffer),
+      });
+      const parsed = await parser.getText();
+      rawText = typeof parsed === "string" ? parsed : (parsed?.text || "");
+      if (typeof parser.destroy === "function") {
+        await parser.destroy().catch(() => {});
+      }
+    } else if (pdfParseModule?.default && typeof pdfParseModule.default === "function") {
+      const pdfData = await pdfParseModule.default(nodeBuffer);
+      rawText = pdfData?.text || "";
+    } else {
+      throw new Error("PDF tahlil qilish modulini yuklab bo‘lmadi.");
+    }
 
     // Scanned PDF detection: If extracted text is empty or very short (< 20 characters)
     const cleanSample = rawText.replace(/[\s\r\n\t]/g, "");

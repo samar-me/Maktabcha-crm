@@ -14,7 +14,10 @@ import {
   generateCurriculumExcelTemplate,
   parseBulkTextCurriculum,
   normalizeParsedRows,
-} from "@/lib/curriculum-import";
+} from "@/lib/curriculum-import/index";
+import { parseExcelSheet } from "@/lib/curriculum-import/excel-parser";
+import { parseCsvContent } from "@/lib/curriculum-import/csv-parser";
+import { parseTextContent } from "@/lib/curriculum-import/text-parser";
 import {
   parseUniversalCurriculumFileAction,
   parseCurriculumTextWithAIAction,
@@ -190,34 +193,87 @@ export function CurriculumImportDialog({
     setStep(2);
     setLoadingStage("Fayl tahlil qilinmoqda...");
 
+    let t1: any;
+    let t2: any;
+
     try {
-      const formData = new FormData();
-      formData.append("file", fileToParse);
-      if (sheetName) {
-        formData.append("sheetName", sheetName);
-      }
-
-      // Stage 2
-      const t1 = setTimeout(() => {
+      // Animation stages
+      t1 = setTimeout(() => {
         setLoadingStage("Matn ajratilmoqda va formatlar tekshirilmoqda...");
-      }, 500);
+      }, 400);
 
-      // Stage 3
-      const t2 = setTimeout(() => {
+      t2 = setTimeout(() => {
         setLoadingStage("Mavzular va dars rejalari aniqlanmoqda...");
-      }, 1200);
+      }, 900);
 
-      const res = await parseUniversalCurriculumFileAction(formData);
-      clearTimeout(t1);
-      clearTimeout(t2);
+      const ext = fileToParse.name.split(".").pop()?.toLowerCase();
+      let result: UniversalParseResult;
 
-      if (!res.success || !res.result) {
-        toast.error(res.error || "Faylni tahlil qilishda xatolik yuz berdi");
-        setStep(1);
-        return;
+      // ⚡️ FAST PATH: Direct in-browser parsing for XLSX, XLS, CSV, TXT (Instant, 0ms latency)
+      if (ext === "xlsx" || ext === "xls") {
+        const arrayBuf = await fileToParse.arrayBuffer();
+        const excelRes = parseExcelSheet(arrayBuf, sheetName);
+        const normalized = normalizeParsedRows(excelRes.rows);
+        result = {
+          success: true,
+          fileType: ext as any,
+          fileName: fileToParse.name,
+          fileSizeFormatted: formatFileSize(fileToParse.size),
+          items: normalized,
+          sheets: excelRes.sheets,
+          selectedSheet: excelRes.selectedSheet,
+        };
+      } else if (ext === "csv") {
+        const text = await fileToParse.text();
+        const csvRows = parseCsvContent(text);
+        const normalized = normalizeParsedRows(csvRows);
+        result = {
+          success: true,
+          fileType: "csv",
+          fileName: fileToParse.name,
+          fileSizeFormatted: formatFileSize(fileToParse.size),
+          items: normalized,
+        };
+      } else if (ext === "txt") {
+        const text = await fileToParse.text();
+        const txtRes = parseTextContent(text);
+        const normalized = normalizeParsedRows(txtRes.rows);
+        result = {
+          success: true,
+          fileType: "txt",
+          fileName: fileToParse.name,
+          fileSizeFormatted: formatFileSize(fileToParse.size),
+          detectedTitle: txtRes.detectedTitle,
+          detectedDescription: txtRes.detectedDescription,
+          items: normalized,
+          unparsedText: txtRes.unparsedText,
+        };
+      } else {
+        // 🔒 SERVER PATH: For Word (.docx) and PDF (.pdf)
+        const formData = new FormData();
+        formData.append("file", fileToParse);
+        if (sheetName) {
+          formData.append("sheetName", sheetName);
+        }
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Fayl tahlil qilish vaqti tugadi (Timeout). Qayta urinib ko‘ring.")),
+            25000
+          )
+        );
+
+        const serverActionPromise = parseUniversalCurriculumFileAction(formData);
+        const res: any = await Promise.race([serverActionPromise, timeoutPromise]);
+
+        if (!res.success || !res.result) {
+          toast.error(res.error || "Faylni tahlil qilishda xatolik yuz berdi");
+          setStep(1);
+          return;
+        }
+        result = res.result;
       }
 
-      const result: UniversalParseResult = res.result;
       setParseResult(result);
       setParsedRows(result.items || []);
       setUnparsedText(result.unparsedText || "");
@@ -242,8 +298,12 @@ export function CurriculumImportDialog({
 
       setStep(3);
     } catch (err: any) {
+      console.error("File analyze error:", err);
       toast.error(err.message || "Faylni o‘qishda xatolik yuz berdi");
       setStep(1);
+    } finally {
+      clearTimeout(t1);
+      clearTimeout(t2);
     }
   };
 

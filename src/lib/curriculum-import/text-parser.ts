@@ -4,7 +4,7 @@ import { parseGenericDocumentText } from "./detect-structure";
 /**
  * Parse plain text string or buffer
  */
-export function parseTextContent(textData: string | Buffer | ArrayBuffer): {
+export function parseTextContent(textData: string | Buffer | ArrayBuffer | Uint8Array): {
   detectedTitle?: string;
   detectedDescription?: string;
   rows: CurriculumImportRow[];
@@ -13,10 +13,12 @@ export function parseTextContent(textData: string | Buffer | ArrayBuffer): {
   let text = "";
   if (typeof textData === "string") {
     text = textData;
-  } else if (Buffer.isBuffer(textData)) {
+  } else if (typeof Buffer !== "undefined" && Buffer.isBuffer(textData)) {
     text = textData.toString("utf-8");
-  } else {
+  } else if (textData instanceof Uint8Array || textData instanceof ArrayBuffer) {
     text = new TextDecoder("utf-8").decode(textData);
+  } else {
+    text = String(textData);
   }
 
   // Remove UTF-8 BOM if present

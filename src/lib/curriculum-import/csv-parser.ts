@@ -20,15 +20,17 @@ export function detectCsvDelimiter(csvText: string): string {
  * Parse CSV buffer or string into structured curriculum rows
  */
 export function parseCsvContent(
-  csvData: string | Buffer | ArrayBuffer
+  csvData: string | Buffer | ArrayBuffer | Uint8Array
 ): CurriculumImportRow[] {
   let text = "";
   if (typeof csvData === "string") {
     text = csvData;
-  } else if (Buffer.isBuffer(csvData)) {
+  } else if (typeof Buffer !== "undefined" && Buffer.isBuffer(csvData)) {
     text = csvData.toString("utf-8");
-  } else {
+  } else if (csvData instanceof Uint8Array || csvData instanceof ArrayBuffer) {
     text = new TextDecoder("utf-8").decode(csvData);
+  } else {
+    text = String(csvData);
   }
 
   // Remove UTF-8 BOM if present
@@ -45,7 +47,8 @@ export function parseCsvContent(
       raw: false,
       FS: delimiter,
     });
-    const result = parseExcelSheet(XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }));
+    const writeType = typeof Buffer !== "undefined" ? "buffer" : "array";
+    const result = parseExcelSheet(XLSX.write(workbook, { type: writeType as any, bookType: "xlsx" }));
     return result.rows;
   } catch {
     // Fallback: simple line parser
