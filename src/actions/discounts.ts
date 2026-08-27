@@ -41,7 +41,7 @@ export async function calculateMonthlyWinnerAction(groupId: string, month: numbe
       return { success: false, error: "Bu oyda yakunlangan topshiriqlar topilmadi." };
     }
 
-    const assignmentIds = assignments.map(a => a.id);
+    const assignmentIds = (assignments as any[]).map(a => a.id);
 
     // Fetch all attempts for these assignments
     const { data: attempts, error: attErr } = await supabase
@@ -57,7 +57,7 @@ export async function calculateMonthlyWinnerAction(groupId: string, month: numbe
 
     // Calculate totals
     const studentScores: Record<string, number> = {};
-    for (const attempt of attempts) {
+    for (const attempt of (attempts as any[])) {
       if (!studentScores[attempt.student_id]) {
         studentScores[attempt.student_id] = 0;
       }
