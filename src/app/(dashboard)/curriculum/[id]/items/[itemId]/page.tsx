@@ -34,7 +34,7 @@ export default async function CurriculumItemDetailPage({
     notFound();
   }
 
-  const groups = groupsData || [];
+  const groups = (groupsData as any[]) || [];
   const activeGroups = groups.filter((g) => g.status === "Faol");
 
   return (

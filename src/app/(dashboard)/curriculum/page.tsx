@@ -15,7 +15,7 @@ export default async function CurriculumPage() {
     supabase.from("groups").select("*").order("name"),
   ]);
 
-  const groups = groupsData || [];
+  const groups = (groupsData as any[]) || [];
   const activeGroups = groups.filter((g) => g.status === "Faol");
 
   return (
