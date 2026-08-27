@@ -16,7 +16,12 @@ export function getAIConfig(): AIProviderConfig {
     null;
 
   let model = process.env.AI_MODEL || "";
-  if (!model) {
+  if (
+    !model ||
+    model.includes("preview") ||
+    model === "gemini-2.5-flash" ||
+    model === "gemini-3-flash-preview"
+  ) {
     if (provider === "gemini") {
       model = "gemini-3.6-flash";
     } else if (provider === "openai") {
@@ -75,67 +80,95 @@ export async function callAIProvider(options: CallAIOptions): Promise<string> {
 }
 
 /**
- * Google Gemini REST API execution
+ * Google Gemini REST API execution with automatic model fallback
  */
 async function callGeminiAPI(
   config: AIProviderConfig,
   options: CallAIOptions,
   signal: AbortSignal
 ): Promise<string> {
-  const model = config.model || "gemini-3.6-flash";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
+  const modelsToTry = [
+    config.model || "gemini-3.6-flash",
+    "gemini-3.6-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+  ];
 
-  const payload: any = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: options.userPrompt }],
-      },
-    ],
-    systemInstruction: {
-      parts: [{ text: options.systemPrompt }],
-    },
-    generationConfig: {
-      temperature: options.temperature ?? 0.3,
-      maxOutputTokens: options.maxOutputTokens ?? 4096,
-    },
-  };
+  const uniqueModels = Array.from(new Set(modelsToTry.filter(Boolean)));
+  let lastError: any = null;
 
-  if (options.jsonMode) {
-    payload.generationConfig.responseMimeType = "application/json";
-  }
+  for (const model of uniqueModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    signal,
-  });
+      const payload: any = {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: options.userPrompt }],
+          },
+        ],
+        generationConfig: {
+          temperature: options.temperature ?? 0.3,
+          maxOutputTokens: options.maxOutputTokens ?? 8192,
+        },
+      };
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error("Gemini API Error:", response.status, errorBody);
+      if (options.systemPrompt) {
+        payload.systemInstruction = {
+          parts: [{ text: options.systemPrompt }],
+        };
+      }
 
-    if (response.status === 429) {
-      throw new Error("AI so‘rov limiti tugagan. Iltimos, bir ozdan so‘ng qayta urinib ko‘ring.");
+      if (options.jsonMode) {
+        payload.generationConfig.responseMimeType = "application/json";
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.warn(`Gemini API Error for model ${model}:`, response.status, errorBody);
+
+        if (response.status === 404) {
+          // Model deprecated or not found, try next candidate
+          continue;
+        }
+
+        if (response.status === 429) {
+          throw new Error("AI so‘rov limiti tugagan. Iltimos, bir ozdan so‘ng qayta urinib ko‘ring.");
+        }
+        if (response.status === 400 || response.status === 403) {
+          throw new Error("AI API kaliti yaroqsiz yoki noto‘g‘ri sozlangan.");
+        }
+        throw new Error(`AI xizmatiga ulanib bo‘lmadi (Status: ${response.status}).`);
+      }
+
+      const result = await response.json();
+      const rawText =
+        result?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        result?.candidates?.[0]?.text ||
+        "";
+
+      if (!rawText) {
+        throw new Error("AI bo‘sh javob qaytardi.");
+      }
+
+      return rawText.trim();
+    } catch (err: any) {
+      lastError = err;
+      if (err.message && (err.message.includes("limiti") || err.message.includes("kaliti"))) {
+        throw err;
+      }
     }
-    if (response.status === 400 || response.status === 403) {
-      throw new Error("AI API kaliti yaroqsiz yoki noto‘g‘ri sozlangan.");
-    }
-    throw new Error(`AI xizmatiga ulanib bo‘lmadi (Status: ${response.status}).`);
   }
 
-  const result = await response.json();
-  const rawText =
-    result?.candidates?.[0]?.content?.parts?.[0]?.text ||
-    result?.candidates?.[0]?.text ||
-    "";
-
-  if (!rawText) {
-    throw new Error("AI bo‘sh javob qaytardi.");
-  }
-
-  return rawText.trim();
+  throw lastError || new Error("AI xizmatiga ulanishda xatolik yuz berdi.");
 }
 
 /**
