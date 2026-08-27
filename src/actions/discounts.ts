@@ -9,8 +9,7 @@ export async function calculateMonthlyWinnerAction(groupId: string, month: numbe
     const supabase = await createClient();
     
     // Check if discount already exists for this group/month/year
-    const { data: existing } = await supabase
-      .from("student_discounts")
+    const { data: existing } = await (supabase.from("student_discounts") as any)
       .select("id")
       .eq("group_id", groupId)
       .eq("month", month)
@@ -89,8 +88,7 @@ export async function calculateMonthlyWinnerAction(groupId: string, month: numbe
       is_used: false,
     };
 
-    const { error: insErr } = await supabase
-      .from("student_discounts")
+    const { error: insErr } = await (supabase.from("student_discounts") as any)
       .insert(payload);
 
     if (insErr) throw new Error(insErr.message);

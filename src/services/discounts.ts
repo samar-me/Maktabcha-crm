@@ -3,7 +3,7 @@ import { StudentDiscount, StudentDiscountInsert } from "@/types/discounts";
 
 export async function getStudentDiscounts(studentId?: string): Promise<StudentDiscount[]> {
   const supabase = createClient();
-  let query = supabase.from("student_discounts").select("*").order("created_at", { ascending: false });
+  let query = (supabase.from("student_discounts") as any).select("*").order("created_at", { ascending: false });
   if (studentId) {
     query = query.eq("student_id", studentId);
   }
@@ -14,8 +14,7 @@ export async function getStudentDiscounts(studentId?: string): Promise<StudentDi
 
 export async function getUnusedDiscount(studentId: string): Promise<StudentDiscount | null> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("student_discounts")
+  const { data, error } = await (supabase.from("student_discounts") as any)
     .select("*")
     .eq("student_id", studentId)
     .eq("is_used", false)
@@ -30,8 +29,7 @@ export async function getUnusedDiscount(studentId: string): Promise<StudentDisco
 export async function createStudentDiscount(discount: StudentDiscountInsert): Promise<StudentDiscount> {
   const supabase = createClient();
   const payload: any = discount;
-  const { data, error } = await supabase
-    .from("student_discounts")
+  const { data, error } = await (supabase.from("student_discounts") as any)
     .insert(payload)
     .select()
     .single();
@@ -43,8 +41,7 @@ export async function createStudentDiscount(discount: StudentDiscountInsert): Pr
 export async function markDiscountAsUsed(id: string): Promise<void> {
   const supabase = createClient();
   const payload: any = { is_used: true };
-  const { error } = await supabase
-    .from("student_discounts")
+  const { error } = await (supabase.from("student_discounts") as any)
     .update(payload)
     .eq("id", id);
 
