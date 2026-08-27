@@ -14,10 +14,15 @@ export const metadata = {
 
 export default async function EditAssignmentPage({ params }: EditAssignmentPageProps) {
   const { id } = await params;
-  const [assignment, groups] = await Promise.all([
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+
+  const [assignment, groupsRes] = await Promise.all([
     getAssignmentById(id),
-    getGroups(),
+    supabase.from("groups").select("*").order("created_at", { ascending: false }),
   ]);
+
+  const groups = (groupsRes.data || []) as any[];
 
   if (!assignment) {
     notFound();

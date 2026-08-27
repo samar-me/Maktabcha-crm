@@ -17,7 +17,10 @@ export const metadata = {
 
 export default async function NewAssignmentPage({ searchParams }: NewAssignmentPageProps) {
   const { mode, lessonId, groupId, curriculumItemId } = await searchParams;
-  const groups = await getGroups();
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: groupsData } = await supabase.from("groups").select("*").order("created_at", { ascending: false });
+  const groups = (groupsData || []) as any[];
   const activeGroups = groups.filter((g) => g.status === "Faol");
 
   const initialMode = mode === "manual" ? "manual" : "ai";
