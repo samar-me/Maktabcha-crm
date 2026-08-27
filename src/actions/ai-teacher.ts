@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY || "",
+  apiKey: process.env.AI_API_KEY || process.env.GEMINI_API_KEY || "",
 });
 
 export async function generateLessonPlanAction(groupId: string) {
