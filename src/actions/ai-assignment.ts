@@ -1,5 +1,7 @@
 "use server";
 
+export const maxDuration = 60; // Allow up to 60 seconds for AI generation (Vercel Pro/Hobby fallback)
+
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {

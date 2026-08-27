@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS public.student_credentials (
 CREATE TABLE IF NOT EXISTS public.assignments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  lesson_id UUID REFERENCES public.lessons(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   description TEXT,
   public_token TEXT NOT NULL UNIQUE,

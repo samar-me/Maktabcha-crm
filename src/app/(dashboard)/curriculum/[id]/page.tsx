@@ -4,7 +4,7 @@ import {
   getCurriculumItems,
   getCurriculumProgress,
 } from "@/services/curriculum";
-import { getGroups } from "@/services/groups";
+import { createClient } from "@/lib/supabase/server";
 import { CurriculumDetailView } from "@/features/curriculum/curriculum-detail-view";
 
 interface CurriculumDetailPageProps {
@@ -21,18 +21,20 @@ export async function generateMetadata({ params }: CurriculumDetailPageProps) {
 
 export default async function CurriculumDetailPage({ params }: CurriculumDetailPageProps) {
   const { id } = await params;
+  const supabase = await createClient();
 
-  const [curriculum, items, progress, groups] = await Promise.all([
+  const [curriculum, items, progress, { data: groupsData }] = await Promise.all([
     getCurriculumById(id),
     getCurriculumItems(id),
     getCurriculumProgress(id),
-    getGroups(),
+    supabase.from("groups").select("*").order("name"),
   ]);
 
   if (!curriculum) {
     notFound();
   }
 
+  const groups = groupsData || [];
   const activeGroups = groups.filter((g) => g.status === "Faol");
 
   return (
