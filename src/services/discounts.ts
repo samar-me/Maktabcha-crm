@@ -29,10 +29,10 @@ export async function getUnusedDiscount(studentId: string): Promise<StudentDisco
 
 export async function createStudentDiscount(discount: StudentDiscountInsert): Promise<StudentDiscount> {
   const supabase = createClient();
+  const payload: any = discount;
   const { data, error } = await supabase
     .from("student_discounts")
-    // @ts-ignore - bypassing never inference for new table
-    .insert(discount)
+    .insert(payload)
     .select()
     .single();
 
@@ -42,10 +42,10 @@ export async function createStudentDiscount(discount: StudentDiscountInsert): Pr
 
 export async function markDiscountAsUsed(id: string): Promise<void> {
   const supabase = createClient();
+  const payload: any = { is_used: true };
   const { error } = await supabase
     .from("student_discounts")
-    // @ts-ignore - bypassing never inference for new table
-    .update({ is_used: true })
+    .update(payload)
     .eq("id", id);
 
   if (error) throw new Error(error.message);

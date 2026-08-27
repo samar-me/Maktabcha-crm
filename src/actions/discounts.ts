@@ -79,18 +79,19 @@ export async function calculateMonthlyWinnerAction(groupId: string, month: numbe
     }
 
     // Insert discount
+    const payload: any = {
+      student_id: topStudentId,
+      group_id: groupId,
+      month,
+      year,
+      discount_percentage: 20,
+      reason: "Oy g'olibi",
+      is_used: false,
+    };
+
     const { error: insErr } = await supabase
       .from("student_discounts")
-      // @ts-ignore - bypassing never inference for new table
-      .insert({
-        student_id: topStudentId,
-        group_id: groupId,
-        month,
-        year,
-        discount_percentage: 20,
-        reason: "Oy g'olibi",
-        is_used: false,
-      });
+      .insert(payload);
 
     if (insErr) throw new Error(insErr.message);
 
