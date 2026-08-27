@@ -26,7 +26,7 @@ async function callGeminiDirect(
         systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {
           temperature: 0.2,
-          maxOutputTokens: 4096,
+          maxOutputTokens: 8192,
           responseMimeType: "application/json",
         },
       };
@@ -145,12 +145,27 @@ QOIDALAR:
 
       let parsed: any;
       try {
-        // Strip markdown code blocks if present
-        const clean = rawText.replace(/```(?:json)?\s*/gi, "").replace(/```\s*/gi, "").trim();
+        // Try to extract JSON from anywhere in the response
+        let clean = rawText.trim();
+        const jsonMatch = clean.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+        if (jsonMatch) {
+          clean = jsonMatch[0];
+        } else {
+          // Fallback basic strip
+          clean = clean.replace(/```(?:json)?\s*/gi, "").replace(/```\s*/gi, "").trim();
+        }
+        
+        // Agar chala uzilgan bo'lsa eng oxirgi to'g'ri qavsni izlab yopishga urinib ko'ramiz
+        if (!clean.endsWith("}") && !clean.endsWith("]")) {
+           // JSON is truncated! We can't parse it fully but we will fail gracefully
+           throw new Error("JSON matni oxirigacha yetib kelmagan (chala yozilgan)");
+        }
+        
         parsed = JSON.parse(clean);
-      } catch {
+      } catch (err: any) {
+        console.error("JSON parse error:", err.message, "Raw AI Text:", rawText.slice(0, 500));
         return NextResponse.json(
-          { success: false, error: "AI javobini tahlil qilishda xatolik. Qayta urinib ko'ring." },
+          { success: false, error: `AI javobini tahlil qilishda xatolik: ${err.message}` },
           { status: 500 }
         );
       }
@@ -162,6 +177,7 @@ QOIDALAR:
           { status: 422 }
         );
       }
+
 
       return NextResponse.json({ success: true, data: normalized });
     }
@@ -205,11 +221,23 @@ QOIDALAR:
 
       let parsed: any;
       try {
-        const clean = rawText.replace(/```(?:json)?\s*/gi, "").replace(/```\s*/gi, "").trim();
+        let clean = rawText.trim();
+        const jsonMatch = clean.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+        if (jsonMatch) {
+          clean = jsonMatch[0];
+        } else {
+          clean = clean.replace(/```(?:json)?\s*/gi, "").replace(/```\s*/gi, "").trim();
+        }
+
+        if (!clean.endsWith("}") && !clean.endsWith("]")) {
+           throw new Error("JSON matni oxirigacha yetib kelmagan. (Darslar sonini kamaytirib ko'ring)");
+        }
+
         parsed = JSON.parse(clean);
-      } catch {
+      } catch (err: any) {
+        console.error("JSON parse error (generate):", err.message, "Raw:", rawText.slice(0, 500));
         return NextResponse.json(
-          { success: false, error: "AI javobini tahlil qilishda xatolik. Qayta urinib ko'ring." },
+          { success: false, error: `AI javobini tahlil qilishda xatolik yuz berdi: ${err.message}` },
           { status: 500 }
         );
       }
