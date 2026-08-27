@@ -350,7 +350,7 @@ export function CurriculumImportDialog({
     }, 400);
   };
 
-  // Perform text parsing directly with AI
+  // Perform text parsing directly with AI via API route (avoids 10s Vercel timeout)
   const handleAnalyzeTextWithAI = async () => {
     if (!rawTextInput.trim()) {
       toast.error("Iltimos, matn kiriting");
@@ -361,7 +361,15 @@ export function CurriculumImportDialog({
     setLoadingStage("✨ AI matnni tahlil qilib, darslarga ajratmoqda...");
 
     try {
-      const res = await parseCurriculumTextWithAIAction(rawTextInput);
+      const response = await fetch("/api/curriculum/ai-parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "parse-text", text: rawTextInput }),
+        signal: AbortSignal.timeout(55000),
+      });
+
+      const res = await response.json();
+
       if (!res.success || !res.data) {
         toast.error(res.error || "AI tahlilida xatolik");
         setStep(1);
@@ -393,10 +401,10 @@ export function CurriculumImportDialog({
     }
   };
 
-  // Generate Curriculum using AI Prompt
+  // Generate Curriculum using AI Prompt (via API route to avoid Vercel 10s timeout)
   const handleGenerateCurriculumWithAI = async () => {
     if (!aiCoursePrompt.trim()) {
-      toast.error("Iltimos, kurs mavzusi yoki yo‘nalishini kiriting");
+      toast.error("Iltimos, kurs mavzusi yoki yo'nalishini kiriting");
       return;
     }
 
@@ -404,7 +412,15 @@ export function CurriculumImportDialog({
     setLoadingStage("✨ AI dars rejasini shakllantirmoqda...");
 
     try {
-      const res = await generateCurriculumWithAIAction(aiCoursePrompt, aiLessonCount);
+      const response = await fetch("/api/curriculum/ai-parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "generate", prompt: aiCoursePrompt, lessonCount: aiLessonCount }),
+        signal: AbortSignal.timeout(55000),
+      });
+
+      const res = await response.json();
+
       if (!res.success || !res.data) {
         toast.error(res.error || "AI dars rejasini tuzishda xatolik");
         setStep(1);
@@ -435,6 +451,7 @@ export function CurriculumImportDialog({
       setStep(1);
     }
   };
+
 
   // AI-Assisted Structure Extraction for unparsed / messy content
   const handleAiStructureEnhance = async (textToProcess?: string) => {
