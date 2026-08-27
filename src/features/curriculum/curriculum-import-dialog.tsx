@@ -360,13 +360,25 @@ export function CurriculumImportDialog({
     setStep(2);
     setLoadingStage("✨ AI matnni tahlil qilib, darslarga ajratmoqda...");
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 58000);
+
     try {
       const response = await fetch("/api/curriculum/ai-parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "parse-text", text: rawTextInput }),
-        signal: AbortSignal.timeout(55000),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        toast.error(errData.error || `Server xatosi (${response.status}). Qayta urinib ko'ring.`);
+        setStep(1);
+        return;
+      }
 
       const res = await response.json();
 
@@ -396,10 +408,16 @@ export function CurriculumImportDialog({
       toast.success(`✨ AI ${normalized.length} ta dars mavzusini aniqladi!`);
       setStep(3);
     } catch (err: any) {
-      toast.error(err.message || "AI tahlilida xatolik");
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        toast.error("AI javob berishda kechikdi. Iltimos, matnni qisqartiring yoki qayta urinib ko'ring.");
+      } else {
+        toast.error(err.message || "AI tahlilida xatolik");
+      }
       setStep(1);
     }
   };
+
 
   // Generate Curriculum using AI Prompt (via API route to avoid Vercel 10s timeout)
   const handleGenerateCurriculumWithAI = async () => {
@@ -411,13 +429,25 @@ export function CurriculumImportDialog({
     setStep(2);
     setLoadingStage("✨ AI dars rejasini shakllantirmoqda...");
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 58000);
+
     try {
       const response = await fetch("/api/curriculum/ai-parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "generate", prompt: aiCoursePrompt, lessonCount: aiLessonCount }),
-        signal: AbortSignal.timeout(55000),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        toast.error(errData.error || `Server xatosi (${response.status}). Qayta urinib ko'ring.`);
+        setStep(1);
+        return;
+      }
 
       const res = await response.json();
 
@@ -447,7 +477,12 @@ export function CurriculumImportDialog({
       toast.success(`🎉 AI ${normalized.length} ta professional dars mavzusini yaratdi!`);
       setStep(3);
     } catch (err: any) {
-      toast.error(err.message || "AI generatsiyasida xatolik");
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        toast.error("AI javob berishda kechikdi. Iltimos, darslar sonini kamaytiring yoki qayta urinib ko'ring.");
+      } else {
+        toast.error(err.message || "AI generatsiyasida xatolik");
+      }
       setStep(1);
     }
   };

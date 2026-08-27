@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "src/app/api/curriculum/ai-parse/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/**/*": {
+      "maxDuration": 60
+    }
+  }
+}
