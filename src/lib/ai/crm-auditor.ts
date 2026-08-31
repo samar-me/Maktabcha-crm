@@ -17,13 +17,11 @@ export async function runCrmHealthAudit(): Promise<{
     { data: groups },
     { data: groupStudents },
     { data: payments },
-    { data: attendance },
   ] = await Promise.all([
     supabase.from("students").select("*"),
     supabase.from("groups").select("*"),
     supabase.from("group_students").select("*"),
     supabase.from("payments").select("*"),
-    supabase.from("attendance").select("*"),
   ]);
 
   const issues: CrmAuditIssue[] = [];
