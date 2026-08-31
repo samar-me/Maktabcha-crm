@@ -7,6 +7,7 @@ export interface MonthlyFinancialSummary {
   totalDebt: number;
   collectionRate: number;
   debtorsCount: number;
+  totalDiscount: number;
 }
 
 export async function getMonthlyFinancialSummary(
@@ -43,16 +44,19 @@ export async function getMonthlyFinancialSummary(
   // 3. Fetch payments for this month & year
   const { data: paymentsData, error: pErr } = await supabase
     .from("payments")
-    .select("amount")
+    .select("amount, final_amount, discount_amount, payment_status, cancelled_at")
     .eq("month", currentMonth)
     .eq("year", currentYear);
   if (pErr) throw new Error(pErr.message);
 
-  const totalCollected = (paymentsData || []).reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
-  const totalDebt = Math.max(0, totalExpected - totalCollected);
-  const collectionRate = totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0;
+  const validPayments = (paymentsData || []).filter((p: any) => (p.payment_status || "paid") === "paid" && !p.cancelled_at);
+  const totalCollected = validPayments.reduce((acc: number, p: any) => acc + Number(p.final_amount ?? p.amount ?? 0), 0);
+  const totalDiscount = validPayments.reduce((acc: number, p: any) => acc + Number(p.discount_amount || 0), 0);
 
   const debtors = await getDebtors(currentMonth, currentYear);
+  const totalDebt = debtors.reduce((sum, row) => sum + row.debtAmount, 0);
+  const covered = totalCollected + totalDiscount;
+  const collectionRate = totalExpected > 0 ? Math.min(100, Math.round((covered / totalExpected) * 100)) : 0;
 
   return {
     totalExpected,
@@ -60,5 +64,6 @@ export async function getMonthlyFinancialSummary(
     totalDebt,
     collectionRate,
     debtorsCount: debtors.length,
+    totalDiscount,
   };
 }

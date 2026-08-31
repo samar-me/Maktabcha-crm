@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test:referral": "node --experimental-strip-types --experimental-specifier-resolution=node src/tests/referral-system.test.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.54",

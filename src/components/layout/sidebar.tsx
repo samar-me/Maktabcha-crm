@@ -21,6 +21,7 @@ import {
   Target,
   Layers,
   Sparkles,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -98,6 +99,11 @@ export const navItems: NavItem[] = [
     icon: AlertCircle,
   },
   {
+    title: "Referral",
+    href: "/referrals",
+    icon: Gift,
+  },
+  {
     title: "Hisobotlar",
     href: "/reports",
     icon: TrendingUp,
@@ -128,7 +134,7 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col w-64 border-r border-border bg-card/60 backdrop-blur shrink-0 h-screen sticky top-0">
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-between px-5 border-b border-border/80">
-        <Link href="/dashboard" className="flex items-center gap-3 group">
+        <Link href="/dashboard" prefetch={false} className="flex items-center gap-3 group">
           <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform">
             <GraduationCap className="w-5 h-5" />
           </div>
@@ -158,6 +164,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={cn(
                 "flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all group",
                 isActive

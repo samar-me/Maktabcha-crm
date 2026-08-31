@@ -68,6 +68,7 @@ export function DashboardView() {
   const [debtors, setDebtors] = React.useState<DebtorInfo[]>([]);
   const [summary, setSummary] = React.useState<MonthlyFinancialSummary>({
     totalExpected: 0,
+    totalDiscount: 0,
     totalCollected: 0,
     totalDebt: 0,
     collectionRate: 0,

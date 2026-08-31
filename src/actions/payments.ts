@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { Payment, PaymentInsert, PaymentUpdate } from "@/types/database";
 import { revalidatePath } from "next/cache";
+import { requireAIContext } from "@/lib/ai/security";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function createPaymentAction(
   payment: PaymentInsert
@@ -27,13 +29,24 @@ export async function createPaymentAction(
       ? payment.payment_method
       : "Karta";
 
-    const supabase = await createClient();
+    const context = await requireAIContext();
+    const supabase: any = createAdminClient();
+    const { data: discount } = await supabase.rpc("calculate_student_discount", { p_organization_id: context.organizationId, p_student_id: payment.student_id, p_group_id: payment.group_id, p_base_amount: amount, p_on_date: payment.payment_date });
+    const bill = discount || { baseAmount: amount, discountPercent: 0, discountAmount: 0, finalAmount: amount, discountType: null, paymentStatus: "paid", includeInRevenue: true };
     const { data, error } = await (supabase.from("payments") as any)
       .insert([
         {
           student_id: payment.student_id,
           group_id: payment.group_id,
-          amount: amount,
+          organization_id: context.organizationId,
+          amount: Number(bill.finalAmount),
+          base_amount: amount,
+          discount_percent: Number(bill.discountPercent || 0),
+          discount_amount: Number(bill.discountAmount || 0),
+          final_amount: Number(bill.finalAmount),
+          discount_type: bill.discountType,
+          payment_status: "paid",
+          include_in_revenue: Number(bill.finalAmount) > 0,
           payment_date: payment.payment_date,
           payment_method: method,
           month: payment.month || new Date().getMonth() + 1,

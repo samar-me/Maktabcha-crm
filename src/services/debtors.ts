@@ -55,9 +55,14 @@ export async function getDebtors(targetMonth?: number, targetYear?: number): Pro
 
   // Group payments by `${student_id}_${group_id}`
   const paidMap = new Map<string, number>();
+  const coveredMap = new Map<string, number>();
   for (const p of payments) {
     const key = `${p.student_id}_${p.group_id}`;
     paidMap.set(key, (paidMap.get(key) || 0) + Number(p.amount));
+    const row = p as any;
+    if ((row.payment_status || "paid") === "paid" && !row.cancelled_at) {
+      coveredMap.set(key, (coveredMap.get(key) || 0) + Number(row.final_amount ?? p.amount) + Number(row.discount_amount || 0));
+    }
   }
 
   const debtorsList: DebtorInfo[] = [];
@@ -70,12 +75,13 @@ export async function getDebtors(targetMonth?: number, targetYear?: number): Pro
     const monthlyFee = Number(group.monthly_fee || 0);
     const key = `${enr.student_id}_${enr.group_id}`;
     const paidAmount = paidMap.get(key) || 0;
-    const debtAmount = Math.max(0, monthlyFee - paidAmount);
+    const coveredAmount = coveredMap.get(key) || 0;
+    const debtAmount = Math.max(0, monthlyFee - coveredAmount);
 
     let status: "Qarzdor" | "To‘langan" | "Qisman" = "To‘langan";
-    if (paidAmount === 0) {
+    if (coveredAmount === 0) {
       status = "Qarzdor";
-    } else if (paidAmount < monthlyFee) {
+    } else if (coveredAmount < monthlyFee) {
       status = "Qisman";
     }
 

@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
+import { StudentReferralCard } from "@/features/referrals/student-referral-card";
 
 interface StudentProfileViewProps {
   studentId: string;
@@ -289,6 +290,8 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
           </div>
         </div>
       </Card>
+
+      <StudentReferralCard studentId={studentId} />
 
       {/* 4 Quick Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

@@ -12,6 +12,7 @@ export const studentSchema = z.object({
   status: z.enum(["Faol", "Ta’til", "Bitirgan", "Tark etgan"]).default("Faol"),
   group_id: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  referral_code_input: z.string().max(32).optional().nullable(),
 });
 
 export type StudentFormValues = z.infer<typeof studentSchema>;

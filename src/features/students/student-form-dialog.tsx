@@ -66,6 +66,7 @@ export function StudentFormDialog({
       status: "Faol",
       group_id: initialGroupId || "",
       notes: "",
+      referral_code_input: "",
     },
   });
 
@@ -87,6 +88,7 @@ export function StudentFormDialog({
         status: student.status || "Faol",
         group_id: initialGroupId || "",
         notes: student.notes || "",
+        referral_code_input: "",
       });
     } else {
       reset({
@@ -101,6 +103,7 @@ export function StudentFormDialog({
         status: "Faol",
         group_id: initialGroupId || "",
         notes: "",
+        referral_code_input: "",
       });
     }
   }, [student, initialGroupId, reset, open]);
@@ -271,6 +274,15 @@ export function StudentFormDialog({
               />
             </div>
           </div>
+
+          {/* Notes */}
+          {!isEditing && (
+            <div className="space-y-1.5">
+              <Label htmlFor="referral_code_input">Taklif kodi</Label>
+              <Input id="referral_code_input" placeholder="Masalan: ALI-82K4" className="uppercase font-mono" disabled={loading} {...register("referral_code_input")} />
+              <p className="text-[11px] text-muted-foreground">Referral birinchi haqiqiy to‘lovdan keyin mukofotlanadi.</p>
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-1.5">

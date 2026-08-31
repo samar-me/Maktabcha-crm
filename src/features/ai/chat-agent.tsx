@@ -1,19 +1,24 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Send, Bot, User, Sparkles } from "lucide-react";
+import { Send, Bot, User, Sparkles, ShieldCheck, Loader2 } from "lucide-react";
 
 import { TextStreamChatTransport } from "ai";
 
 export function ChatAgent() {
+  const transport = useMemo(
+    () => new TextStreamChatTransport({ api: "/api/ai/chat" }),
+    [],
+  );
   const { messages, sendMessage, status } = useChat({
-    transport: new TextStreamChatTransport({ api: "/api/ai/chat" }),
+    transport,
   });
   
   const [input, setInput] = useState("");
+  const [applying, setApplying] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,20 +33,30 @@ export function ChatAgent() {
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+  }, [messages.length, status]);
 
   const isLoading = status === "streaming" || status === "submitted";
+  const textOf = (m: any) => m.parts?.map((p: any) => p.type === "text" ? p.text : "").join("") || "";
+  const confirmationOf = (m: any) => textOf(m).match(/\[CONFIRM:([0-9a-f-]{36})\]/i)?.[1];
+  const applyChange = async (id: string) => {
+    setApplying(id);
+    try {
+      const response = await fetch("/api/ai/actions/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmationId: id }) });
+      const result = await response.json();
+      sendMessage({ role: "user", parts: [{ type: "text", text: result.success ? `Tasdiqlangan amal bajarildi. Natijani tekshir: ${JSON.stringify(result.result)}` : `Amal bajarilmadi: ${result.error}` }] });
+    } finally { setApplying(null); }
+  };
 
   return (
     <Card className="flex flex-col h-[600px] shadow-sm border-muted">
       <CardHeader className="border-b bg-muted/20 px-6 py-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Bot className="w-5 h-5 text-primary" />
-          CRM Chatbot
+          Maktabcha Super Admin AI
         </CardTitle>
         <CardDescription>
-          CRM ma'lumotlari bo'yicha savol bering (masalan: "Kimning to'lovi kechikkan?")
+          So‘rang, tahlil qiling yoki amal buyuring. Muhim o‘zgarishlar avval preview qilinadi.
         </CardDescription>
       </CardHeader>
       
@@ -69,7 +84,7 @@ export function ChatAgent() {
                   ? "bg-primary text-primary-foreground" 
                   : "bg-muted text-foreground"
               }`}>
-                <div className="whitespace-pre-wrap text-sm">{m.parts?.map((p: any) => p.type === 'text' ? p.text : '').join('')}</div>
+                <div className="whitespace-pre-wrap text-sm">{textOf(m).replace(/\[CONFIRM:[0-9a-f-]{36}\]/ig, "")}</div>
                 {m.parts?.some((p: any) => p.type === 'tool-invocation') && (
                   <div className="mt-2 text-xs opacity-70 border-t pt-2 border-primary-foreground/20">
                     <div className="flex items-center gap-1">
@@ -77,6 +92,12 @@ export function ChatAgent() {
                       Ma'lumotlar bazasidan qidirilmoqda...
                     </div>
                   </div>
+                )}
+                {m.role === "assistant" && confirmationOf(m) && (
+                  <Button className="mt-3 w-full" size="sm" onClick={() => applyChange(confirmationOf(m)!)} disabled={Boolean(applying)}>
+                    {applying === confirmationOf(m) ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                    Apply Changes
+                  </Button>
                 )}
               </div>
             </div>
@@ -100,7 +121,7 @@ export function ChatAgent() {
           <input
             value={input}
             onChange={handleInputChange}
-            placeholder="O'zbek tilida savol bering..."
+            placeholder="Masalan: Ali haqida to‘liq hisobot ber..."
             className="flex-1 bg-background border rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             disabled={isLoading}
           />

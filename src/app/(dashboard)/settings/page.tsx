@@ -33,6 +33,7 @@ import {
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ReferralSettingsCard } from "@/features/referrals/referral-settings-card";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -624,6 +625,8 @@ export default function SettingsPage() {
           </Button>
         </div>
       </form>
+
+      <ReferralSettingsCard />
 
       {/* Danger Zone: Clear Demo / Test Data */}
       <Card className="shadow-sm border-rose-200 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10">

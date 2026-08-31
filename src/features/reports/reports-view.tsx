@@ -9,6 +9,7 @@ import { getAttendance } from "@/services/attendance";
 import { getLessons } from "@/services/lessons";
 import { getDebtors, DebtorInfo } from "@/services/debtors";
 import { getMonthlyFinancialSummary, MonthlyFinancialSummary } from "@/services/reports";
+import { getReferralAdminOverviewAction } from "@/actions/referrals";
 import { StatCard } from "@/components/shared/stat-card";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,14 +53,16 @@ export function ReportsView() {
     totalDebt: 0,
     collectionRate: 0,
     debtorsCount: 0,
+    totalDiscount: 0,
   });
   const [loading, setLoading] = React.useState(true);
+  const [referralReport, setReferralReport] = React.useState<any>(null);
 
   React.useEffect(() => {
     async function loadReports() {
       try {
         setLoading(true);
-        const [pmtList, grpList, stList, enrList, attList, lsList, dList, summ] =
+        const [pmtList, grpList, stList, enrList, attList, lsList, dList, summ, referral] =
           await Promise.all([
             getPayments(),
             getGroups(),
@@ -69,6 +72,7 @@ export function ReportsView() {
             getLessons(),
             getDebtors(),
             getMonthlyFinancialSummary(),
+            getReferralAdminOverviewAction(),
           ]);
 
         setPayments(pmtList);
@@ -79,6 +83,7 @@ export function ReportsView() {
         setLessons(lsList);
         setDebtors(dList);
         setSummary(summ);
+        if (referral.success) setReferralReport(referral.data);
       } catch (e) {
         console.error("Error loading reports data:", e);
       } finally {
@@ -90,12 +95,19 @@ export function ReportsView() {
   }, []);
 
   // 1. Revenue by Month
-  const monthlyRevenueData = [
-    { month: "Noyabr 2024", tushum: 1200000, kutilgan: 1200000 },
-    { month: "Dekabr 2024", tushum: 1400000, kutilgan: 1600000 },
-    { month: "Yanvar 2025", tushum: 1600000, kutilgan: 1600000 },
-    { month: "Fevral 2025", tushum: summary.totalCollected, kutilgan: summary.totalExpected },
-  ];
+  const monthlyRevenueData = React.useMemo(() => {
+    const map = new Map<string, { month: string; tushum: number; kutilgan: number }>();
+    for (const payment of payments as any[]) {
+      const key = `${payment.year}-${String(payment.month).padStart(2, "0")}`;
+      const row = map.get(key) || { month: key, tushum: 0, kutilgan: 0 };
+      if ((payment.payment_status || "paid") === "paid" && !payment.cancelled_at) {
+        row.tushum += Number(payment.final_amount ?? payment.amount ?? 0);
+        row.kutilgan += Number(payment.base_amount ?? payment.amount ?? 0);
+      }
+      map.set(key, row);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6).map(([, row]) => row);
+  }, [payments]);
 
   // 2. Payment Method Breakdown (PieChart)
   const cardPayments = payments.filter((p) => p.payment_method === "Karta").reduce((acc, p) => acc + Number(p.amount), 0);
@@ -103,9 +115,9 @@ export function ReportsView() {
   const transferPayments = payments.filter((p) => p.payment_method === "O‘tkazma").reduce((acc, p) => acc + Number(p.amount), 0);
 
   const paymentMethodsData = [
-    { name: "Karta orqali", value: cardPayments || 800000, color: "#2563eb" },
-    { name: "Naqd pulda", value: cashPayments || 400000, color: "#10b981" },
-    { name: "O‘tkazma (Payme/Click)", value: transferPayments || 400000, color: "#8b5cf6" },
+    { name: "Karta orqali", value: cardPayments, color: "#2563eb" },
+    { name: "Naqd pulda", value: cashPayments, color: "#10b981" },
+    { name: "O‘tkazma", value: transferPayments, color: "#8b5cf6" },
   ];
 
   // Group student count map
@@ -142,12 +154,12 @@ export function ReportsView() {
   });
 
   // 5. Student Growth by Month
-  const studentGrowthData = [
-    { month: "Noyabr", yangi: 2, jami: 2 },
-    { month: "Dekabr", yangi: 1, jami: 3 },
-    { month: "Yanvar", yangi: 1, jami: 4 },
-    { month: "Fevral", yangi: 0, jami: students.length },
-  ];
+  const studentGrowthData = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const student of students) { const key = student.joined_at?.slice(0, 7); if (key) counts.set(key, (counts.get(key) || 0) + 1); }
+    let total = 0;
+    return [...counts.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([month, yangi]) => ({ month, yangi, jami: total += yangi }));
+  }, [students]);
 
   // Overall attendance rate
   const totalAtt = attendance.length;
@@ -204,7 +216,7 @@ export function ReportsView() {
 
       {/* Tabs */}
       <Tabs defaultValue="finance" className="space-y-6">
-        <TabsList className="grid grid-cols-3 max-w-lg">
+        <TabsList className="grid grid-cols-4 max-w-2xl">
           <TabsTrigger value="finance" className="gap-2">
             <Wallet className="w-4 h-4" />
             <span>Moliya</span>
@@ -216,6 +228,10 @@ export function ReportsView() {
           <TabsTrigger value="growth" className="gap-2">
             <TrendingUp className="w-4 h-4" />
             <span>O‘sish & Guruhlar</span>
+          </TabsTrigger>
+          <TabsTrigger value="referral" className="gap-2">
+            <Users className="w-4 h-4" />
+            <span>Referral</span>
           </TabsTrigger>
         </TabsList>
 
@@ -365,6 +381,22 @@ export function ReportsView() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="referral" className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            {[
+              ["Bu oy referral", referralReport?.metrics?.monthTotal || 0],
+              ["Successful", referralReport?.metrics?.qualified || 0],
+              ["Pending", referralReport?.metrics?.pending || 0],
+              ["Actual revenue", formatCurrency(referralReport?.metrics?.revenue || 0)],
+              ["Referral discount", formatCurrency(referralReport?.metrics?.discount || 0)],
+            ].map(([label, value]) => <Card key={String(label)}><CardContent className="p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="font-bold mt-2">{value}</p></CardContent></Card>)}
+          </div>
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Card><CardHeader><CardTitle className="text-base">Referral orqali kelgan studentlar</CardTitle><CardDescription>Database’dagi real referral relationlar</CardDescription></CardHeader><CardContent className="divide-y p-0">{!referralReport?.referrals?.length ? <p className="p-6 text-sm text-muted-foreground">Ma’lumot mavjud emas.</p> : referralReport.referrals.map((row: any) => <div key={row.id} className="p-4 flex justify-between text-sm"><span>{row.referred?.first_name} {row.referred?.last_name}<span className="text-muted-foreground"> ← {row.referrer?.first_name} {row.referrer?.last_name}</span></span><b>{row.status}</b></div>)}</CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Top referrers</CardTitle><CardDescription>Successful referral soni bo‘yicha</CardDescription></CardHeader><CardContent className="space-y-2">{!referralReport?.leaderboard?.length ? <p className="text-sm text-muted-foreground">Ma’lumot mavjud emas.</p> : referralReport.leaderboard.map((row: any, index: number) => <div key={row.studentId} className="border rounded-lg p-3 flex justify-between text-sm"><span>{index + 1}. {row.name}</span><b>{row.count} ta</b></div>)}</CardContent></Card>
+          </div>
         </TabsContent>
 
         {/* Tab 2: Attendance Reports */}

@@ -55,6 +55,7 @@ export function PaymentListView() {
   const [students, setStudents] = React.useState<Student[]>([]);
   const [summary, setSummary] = React.useState<MonthlyFinancialSummary>({
     totalExpected: 0,
+    totalDiscount: 0,
     totalCollected: 0,
     totalDebt: 0,
     collectionRate: 0,

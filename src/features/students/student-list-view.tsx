@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
+import { attachReferralByCodeAction } from "@/actions/referrals";
 
 export function StudentListView() {
   const [students, setStudents] = React.useState<Student[]>([]);
@@ -158,6 +159,10 @@ export function StudentListView() {
 
         if (values.group_id) {
           await addStudentToGroup(values.group_id, created.id);
+        }
+        if (values.referral_code_input?.trim()) {
+          const referral = await attachReferralByCodeAction(created.id, values.referral_code_input);
+          if (!referral.success) throw new Error(referral.error);
         }
         toast.success("Yangi o‘quvchi muvaffaqiyatli qo‘shildi");
       }
