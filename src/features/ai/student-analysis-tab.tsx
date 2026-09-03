@@ -18,8 +18,8 @@ export function StudentAnalysisTab() {
     if (!query.trim()) return;
     setLoading(true);
     try {
-      const res = await getStudent360ServerAction(query);
-      if (res.error) {
+      const res: any = await getStudent360ServerAction(query);
+      if (res?.error) {
         toast.error(res.error);
         setReport(null);
       } else {

@@ -82,6 +82,11 @@ export async function executeDryRunAction(params: {
     riskLevel,
     requiresConfirmation: riskLevel >= 2,
     affectedEntities,
+    steps: [
+      `1. Validatsiya: ${params.title}`,
+      "2. Ma'lumotlar bazasi holatini yangilash",
+      "3. Audit jurnaliga qayd etish (Undo imkoniyati bilan)",
+    ],
     payload: params.payload,
     status: "pending",
     createdAt: new Date().toISOString(),

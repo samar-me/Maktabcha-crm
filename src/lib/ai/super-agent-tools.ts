@@ -10,7 +10,7 @@ import { logAiAction } from "./ai-audit";
  */
 export const searchStudentsTool = tool({
   description: "O'quvchilarni ismi, statusi, telefoni yoki qarzdorligi bo'yicha qidiradi.",
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().optional().describe("Qidiruv matni (ism, familiya, telefon)"),
     status: z.enum(["Faol", "Ta’til", "Bitirgan", "Tark etgan"]).optional(),
     hasOverdue: z.boolean().optional().describe("Faqat to'lovi kechikkanlarni qidirish"),
@@ -50,7 +50,7 @@ export const searchStudentsTool = tool({
 
 export const getStudent360Tool = tool({
   description: "Biror o'quvchi haqida to'liq 360-darajali hisobot (davomat, to'lovlar, baholar, xavf darajasi) beradi.",
-  parameters: z.object({
+  inputSchema: z.object({
     studentNameOrId: z.string().describe("O'quvchi ismi yoki ID'si"),
   }),
   execute: async ({ studentNameOrId }) => {
@@ -135,7 +135,7 @@ export const getStudent360Tool = tool({
  */
 export const transferStudentGroupTool = tool({
   description: "O'quvchini bir guruhdan boshqa guruhga ko'chiradi.",
-  parameters: z.object({
+  inputSchema: z.object({
     studentNameOrId: z.string().describe("O'quvchi ismi yoki ID'si"),
     targetGroupNameOrId: z.string().describe("Maqsadli guruh nomi yoki ID'si"),
   }),
@@ -203,7 +203,7 @@ export const transferStudentGroupTool = tool({
  */
 export const createScholarshipExceptionTool = tool({
   description: "O'quvchiga vaqtinchalik yoki doimiy tekin o'qish / grant (scholarship) beradi va uni daromad hisobidan istisno qiladi.",
-  parameters: z.object({
+  inputSchema: z.object({
     studentNameOrId: z.string().describe("O'quvchi ismi yoki ID'si"),
     monthsCount: z.number().default(3).describe("Necha oy tekin o'qishi (masalan 3)"),
     excludeFromRevenue: z.boolean().default(true).describe("Daromadga qo'shilmasinmi?"),
@@ -243,7 +243,7 @@ export const createScholarshipExceptionTool = tool({
  */
 export const resetStudentPasswordTool = tool({
   description: "O'quvchi uchun yangi vaqtinchalik parol o'rnatadi.",
-  parameters: z.object({
+  inputSchema: z.object({
     studentNameOrId: z.string().describe("O'quvchi ismi yoki ID'si"),
   }),
   execute: async ({ studentNameOrId }) => {
@@ -280,7 +280,7 @@ export const resetStudentPasswordTool = tool({
  */
 export const runCrmAuditTool = tool({
   description: "CRM bazasidagi barcha nomuvofiqliklar, takrorlangan yozuvlar va xatoliklarni skanerlaydi.",
-  parameters: z.object({}),
+  inputSchema: z.object({}),
   execute: async () => {
     const result = await runCrmHealthAudit();
     return result;
@@ -292,7 +292,7 @@ export const runCrmAuditTool = tool({
  */
 export const exportFullCrmDataTool = tool({
   description: "Maktabcha CRM ichidagi barcha ma'lumotlarni xavfsiz JSON/CSV o'ram (ZIP bundle) ko'rinishida eksport qiladi.",
-  parameters: z.object({}),
+  inputSchema: z.object({}),
   execute: async () => {
     const exportBundle = await generateFullCrmExport();
     return exportBundle;
