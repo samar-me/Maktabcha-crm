@@ -2,11 +2,23 @@ import { createClient } from "@/lib/supabase/client";
 import { Group, GroupInsert, GroupUpdate, GroupStudent, Student } from "@/types/database";
 import { OfflineDB } from "@/lib/offline/db";
 import { deleteGroupAction } from "@/actions/groups";
+import { memoryCache } from "@/lib/cache/memory-cache";
+
+const GROUPS_CACHE_KEY = "cache_groups_all";
 
 export async function getGroups(): Promise<Group[]> {
+  // 1. Instant Memory Cache (0ms)
+  if (typeof window !== "undefined") {
+    const memCached = memoryCache.get<Group[]>(GROUPS_CACHE_KEY);
+    if (memCached) return memCached;
+  }
+
+  // 2. Offline fallback (IndexedDB)
   if (typeof window !== "undefined" && !navigator.onLine) {
     try {
-      return await OfflineDB.getAllItems<Group>("groups");
+      const dbCached = await OfflineDB.getAllItems<Group>("groups");
+      memoryCache.set(GROUPS_CACHE_KEY, dbCached, 30);
+      return dbCached;
     } catch {
       return [];
     }
@@ -25,6 +37,7 @@ export async function getGroups(): Promise<Group[]> {
 
     const items = (data || []) as Group[];
     if (typeof window !== "undefined") {
+      memoryCache.set(GROUPS_CACHE_KEY, items, 60);
       OfflineDB.putItems("groups", items).catch(() => {});
     }
 
@@ -38,6 +51,12 @@ export async function getGroups(): Promise<Group[]> {
 }
 
 export async function getGroupById(id: string): Promise<Group | null> {
+  const cacheKey = `cache_group_${id}`;
+  if (typeof window !== "undefined") {
+    const memCached = memoryCache.get<Group>(cacheKey);
+    if (memCached) return memCached;
+  }
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("groups")
@@ -50,7 +69,12 @@ export async function getGroupById(id: string): Promise<Group | null> {
     throw new Error(error.message);
   }
 
-  return data as Group | null;
+  const group = data as Group | null;
+  if (group && typeof window !== "undefined") {
+    memoryCache.set(cacheKey, group, 60);
+  }
+
+  return group;
 }
 
 export async function createGroup(group: GroupInsert): Promise<Group> {
@@ -70,6 +94,10 @@ export async function createGroup(group: GroupInsert): Promise<Group> {
     throw new Error(error.message);
   }
 
+  if (typeof window !== "undefined") {
+    memoryCache.invalidate("cache_group");
+  }
+
   return data as Group;
 }
 
@@ -86,6 +114,10 @@ export async function updateGroup(id: string, updates: GroupUpdate): Promise<Gro
     throw new Error(error.message);
   }
 
+  if (typeof window !== "undefined") {
+    memoryCache.invalidate("cache_group");
+  }
+
   return data as Group;
 }
 
@@ -95,6 +127,11 @@ export async function deleteGroup(id: string): Promise<boolean> {
     console.error("Error deleting group:", res.error);
     throw new Error(res.error || "Guruhni o‘chirishda xatolik");
   }
+
+  if (typeof window !== "undefined") {
+    memoryCache.invalidate("cache_group");
+  }
+
   return true;
 }
 
@@ -118,6 +155,12 @@ export async function getGroupStudents(groupId?: string): Promise<GroupStudent[]
 }
 
 export async function getStudentsByGroupId(groupId: string): Promise<Student[]> {
+  const cacheKey = `cache_group_students_${groupId}`;
+  if (typeof window !== "undefined") {
+    const memCached = memoryCache.get<Student[]>(cacheKey);
+    if (memCached) return memCached;
+  }
+
   if (typeof window !== "undefined" && !navigator.onLine) {
     try {
       const allStudents = await OfflineDB.getAllItems<Student>("students");
@@ -141,6 +184,7 @@ export async function getStudentsByGroupId(groupId: string): Promise<Student[]> 
 
     const students = (data || []).map((item: any) => item.student).filter(Boolean) as Student[];
     if (typeof window !== "undefined") {
+      memoryCache.set(cacheKey, students, 60);
       OfflineDB.putItems("students", students).catch(() => {});
     }
 
@@ -188,6 +232,10 @@ export async function addStudentToGroup(groupId: string, studentId: string): Pro
     throw new Error(error.message);
   }
 
+  if (typeof window !== "undefined") {
+    memoryCache.invalidate(`cache_group_students_${groupId}`);
+  }
+
   return true;
 }
 
@@ -203,6 +251,10 @@ export async function removeStudentFromGroup(groupId: string, studentId: string)
   if (error) {
     console.error("Error removing student from group:", error);
     throw new Error(error.message);
+  }
+
+  if (typeof window !== "undefined") {
+    memoryCache.invalidate(`cache_group_students_${groupId}`);
   }
 
   return true;

@@ -2,11 +2,23 @@ import { createClient } from "@/lib/supabase/client";
 import { Student, StudentInsert, StudentUpdate } from "@/types/database";
 import { OfflineDB } from "@/lib/offline/db";
 import { deleteStudentAction } from "@/actions/students";
+import { memoryCache } from "@/lib/cache/memory-cache";
+
+const STUDENTS_CACHE_KEY = "cache_students_all";
 
 export async function getStudents(): Promise<Student[]> {
+  // 1. Instant Memory Cache (0ms)
+  if (typeof window !== "undefined") {
+    const memCached = memoryCache.get<Student[]>(STUDENTS_CACHE_KEY);
+    if (memCached) return memCached;
+  }
+
+  // 2. Offline fallback (IndexedDB)
   if (typeof window !== "undefined" && !navigator.onLine) {
     try {
-      return await OfflineDB.getAllItems<Student>("students");
+      const dbCached = await OfflineDB.getAllItems<Student>("students");
+      memoryCache.set(STUDENTS_CACHE_KEY, dbCached, 30);
+      return dbCached;
     } catch {
       return [];
     }
@@ -25,6 +37,7 @@ export async function getStudents(): Promise<Student[]> {
 
     const items = (data || []) as Student[];
     if (typeof window !== "undefined") {
+      memoryCache.set(STUDENTS_CACHE_KEY, items, 60);
       OfflineDB.putItems("students", items).catch(() => {});
     }
 
@@ -38,6 +51,12 @@ export async function getStudents(): Promise<Student[]> {
 }
 
 export async function getStudentById(id: string): Promise<Student | null> {
+  const cacheKey = `cache_student_${id}`;
+  if (typeof window !== "undefined") {
+    const memCached = memoryCache.get<Student>(cacheKey);
+    if (memCached) return memCached;
+  }
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("students")
@@ -50,7 +69,12 @@ export async function getStudentById(id: string): Promise<Student | null> {
     throw new Error(error.message);
   }
 
-  return data as Student | null;
+  const student = data as Student | null;
+  if (student && typeof window !== "undefined") {
+    memoryCache.set(cacheKey, student, 60);
+  }
+
+  return student;
 }
 
 export async function createStudent(student: StudentInsert): Promise<Student> {
@@ -63,6 +87,10 @@ export async function createStudent(student: StudentInsert): Promise<Student> {
   if (error) {
     console.error("Error creating student:", error);
     throw new Error(error.message);
+  }
+
+  if (typeof window !== "undefined") {
+    memoryCache.invalidate("cache_students");
   }
 
   return data as Student;
@@ -81,6 +109,10 @@ export async function updateStudent(id: string, updates: StudentUpdate): Promise
     throw new Error(error.message);
   }
 
+  if (typeof window !== "undefined") {
+    memoryCache.invalidate("cache_students");
+  }
+
   return data as Student;
 }
 
@@ -90,5 +122,10 @@ export async function deleteStudent(id: string): Promise<boolean> {
     console.error("Error deleting student:", res.error);
     throw new Error(res.error || "O‘quvchini o‘chirishda xatolik");
   }
+
+  if (typeof window !== "undefined") {
+    memoryCache.invalidate("cache_students");
+  }
+
   return true;
 }

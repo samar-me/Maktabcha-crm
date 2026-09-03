@@ -6,7 +6,11 @@ import { Toaster } from "sonner";
 import { PwaRegister } from "@/components/pwa-register";
 import { OfflineSyncIndicator } from "@/components/shared/offline-sync-indicator";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,
+});
 
 export const viewport: Viewport = {
   width: "device-width",
