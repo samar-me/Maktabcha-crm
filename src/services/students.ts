@@ -1,19 +1,40 @@
 import { createClient } from "@/lib/supabase/client";
 import { Student, StudentInsert, StudentUpdate } from "@/types/database";
+import { OfflineDB } from "@/lib/offline/db";
+import { deleteStudentAction } from "@/actions/students";
 
 export async function getStudents(): Promise<Student[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("students")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching students:", error);
-    throw new Error(error.message);
+  if (typeof window !== "undefined" && !navigator.onLine) {
+    try {
+      return await OfflineDB.getAllItems<Student>("students");
+    } catch {
+      return [];
+    }
   }
 
-  return (data || []) as Student[];
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("students")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    const items = (data || []) as Student[];
+    if (typeof window !== "undefined") {
+      OfflineDB.putItems("students", items).catch(() => {});
+    }
+
+    return items;
+  } catch (err) {
+    if (typeof window !== "undefined") {
+      return await OfflineDB.getAllItems<Student>("students");
+    }
+    throw err;
+  }
 }
 
 export async function getStudentById(id: string): Promise<Student | null> {
@@ -62,8 +83,6 @@ export async function updateStudent(id: string, updates: StudentUpdate): Promise
 
   return data as Student;
 }
-
-import { deleteStudentAction } from "@/actions/students";
 
 export async function deleteStudent(id: string): Promise<boolean> {
   const res = await deleteStudentAction(id);

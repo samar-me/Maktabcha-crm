@@ -1,19 +1,40 @@
 import { createClient } from "@/lib/supabase/client";
 import { Group, GroupInsert, GroupUpdate, GroupStudent, Student } from "@/types/database";
+import { OfflineDB } from "@/lib/offline/db";
+import { deleteGroupAction } from "@/actions/groups";
 
 export async function getGroups(): Promise<Group[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("groups")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching groups:", error);
-    throw new Error(error.message);
+  if (typeof window !== "undefined" && !navigator.onLine) {
+    try {
+      return await OfflineDB.getAllItems<Group>("groups");
+    } catch {
+      return [];
+    }
   }
 
-  return (data || []) as Group[];
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("groups")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    const items = (data || []) as Group[];
+    if (typeof window !== "undefined") {
+      OfflineDB.putItems("groups", items).catch(() => {});
+    }
+
+    return items;
+  } catch (err) {
+    if (typeof window !== "undefined") {
+      return await OfflineDB.getAllItems<Group>("groups");
+    }
+    throw err;
+  }
 }
 
 export async function getGroupById(id: string): Promise<Group | null> {
@@ -68,8 +89,6 @@ export async function updateGroup(id: string, updates: GroupUpdate): Promise<Gro
   return data as Group;
 }
 
-import { deleteGroupAction } from "@/actions/groups";
-
 export async function deleteGroup(id: string): Promise<boolean> {
   const res = await deleteGroupAction(id);
   if (!res.success) {
@@ -99,19 +118,39 @@ export async function getGroupStudents(groupId?: string): Promise<GroupStudent[]
 }
 
 export async function getStudentsByGroupId(groupId: string): Promise<Student[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("group_students")
-    .select("student_id, student:students(*)")
-    .eq("group_id", groupId)
-    .eq("status", "Faol");
-
-  if (error) {
-    console.error("Error fetching students by group:", error);
-    throw new Error(error.message);
+  if (typeof window !== "undefined" && !navigator.onLine) {
+    try {
+      const allStudents = await OfflineDB.getAllItems<Student>("students");
+      return allStudents;
+    } catch {
+      return [];
+    }
   }
 
-  return (data || []).map((item: any) => item.student).filter(Boolean) as Student[];
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("group_students")
+      .select("student_id, student:students(*)")
+      .eq("group_id", groupId)
+      .eq("status", "Faol");
+
+    if (error) {
+      throw error;
+    }
+
+    const students = (data || []).map((item: any) => item.student).filter(Boolean) as Student[];
+    if (typeof window !== "undefined") {
+      OfflineDB.putItems("students", students).catch(() => {});
+    }
+
+    return students;
+  } catch (err) {
+    if (typeof window !== "undefined") {
+      return await OfflineDB.getAllItems<Student>("students");
+    }
+    throw err;
+  }
 }
 
 export async function getGroupsByStudentId(studentId: string): Promise<Group[]> {

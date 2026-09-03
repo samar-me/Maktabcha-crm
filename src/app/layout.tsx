@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
+import { PwaRegister } from "@/components/pwa-register";
+import { OfflineSyncIndicator } from "@/components/shared/offline-sync-indicator";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -58,6 +60,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <PwaRegister />
+          <OfflineSyncIndicator />
           <Toaster position="top-right" richColors closeButton />
         </ThemeProvider>
       </body>
